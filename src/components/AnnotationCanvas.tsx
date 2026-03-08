@@ -156,7 +156,7 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
   };
 
   const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!drawing || activeTool === 'select') return;
+    if (!drawing) return;
     e.preventDefault();
     const pos = getPos(e);
     const canvas = canvasRef.current;
