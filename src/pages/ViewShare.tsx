@@ -28,7 +28,14 @@ export default function ViewShare() {
       return;
     }
     try {
-      const decoded = JSON.parse(decodeURIComponent(atob(data)));
+      // Decode: base64 -> bytes -> UTF-8 string -> JSON
+      const binary = atob(data);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      const jsonStr = new TextDecoder().decode(bytes);
+      const decoded = JSON.parse(jsonStr);
       if (decoded.passwordHash) {
         setPasswordHash(decoded.passwordHash);
         setNeedsPassword(true);
