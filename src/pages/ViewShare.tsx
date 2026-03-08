@@ -114,6 +114,17 @@ export default function ViewShare() {
             <ArrowLeft size={16} /> Back to editor
           </Button>
           <h1 className="text-lg font-semibold text-foreground">Shared Annotations</h1>
+          <Button
+            size="sm"
+            onClick={() => {
+              // Store images in sessionStorage and navigate to editor
+              sessionStorage.setItem('clone_images', JSON.stringify(images));
+              navigate('/');
+              toast.success('Cloned to editor!');
+            }}
+          >
+            <Copy size={16} /> Clone to Editor
+          </Button>
         </div>
         {images.map((image, index) => (
           <div key={image.id} className="image-card">
