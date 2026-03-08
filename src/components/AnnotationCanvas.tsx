@@ -163,19 +163,24 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
     const ctx = canvas?.getContext('2d');
     if (!ctx || !canvas) return;
 
-    if (activeTool === 'pencil') {
+    if (activeTool === 'pencil' || activeTool === 'eraser') {
       setCurrentPoints(prev => [...prev, pos]);
-      // Live draw
       redraw();
       const pts = [...currentPoints, pos];
-      ctx.strokeStyle = activeColor;
-      ctx.lineWidth = activeSize;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.beginPath();
-      ctx.moveTo(pts[0].x, pts[0].y);
-      pts.forEach(p => ctx.lineTo(p.x, p.y));
-      ctx.stroke();
+      const preview: Annotation = {
+        id: 'preview',
+        tool: activeTool,
+        color: activeColor,
+        size: activeSize,
+        points: pts,
+      };
+      // Draw on offscreen for eraser support
+      const offscreen = document.createElement('canvas');
+      offscreen.width = canvas.width;
+      offscreen.height = canvas.height;
+      const offCtx = offscreen.getContext('2d')!;
+      drawAnnotation(offCtx, preview);
+      ctx.drawImage(offscreen, 0, 0);
     } else {
       // Shape preview
       redraw();
