@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Share2, Lock, Copy, Check, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnnotatedImage } from '@/types/annotation';
+import { toast } from 'sonner';
 
 interface Props {
   images: AnnotatedImage[];
@@ -16,6 +17,24 @@ async function hashPassword(password: string): Promise<string> {
   return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// Compress a base64 data URL image to reduce size
+function compressImage(dataUrl: string, maxWidth = 1200, quality = 0.6): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxWidth / img.width);
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
 export default function ShareDialog({ images, open, onClose }: Props) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -23,7 +42,6 @@ export default function ShareDialog({ images, open, onClose }: Props) {
   const [copied, setCopied] = useState(false);
   const [generating, setGenerating] = useState(false);
 
-  // Reset state when dialog opens
   useEffect(() => {
     if (open) {
       setShareUrl('');
@@ -38,13 +56,20 @@ export default function ShareDialog({ images, open, onClose }: Props) {
     setGenerating(true);
 
     try {
-      const payload: any = { images };
+      // Compress images to fit in localStorage
+      const compressedImages = await Promise.all(
+        images.map(async (img) => ({
+          ...img,
+          originalSrc: await compressImage(img.originalSrc),
+        }))
+      );
+
+      const payload: any = { images: compressedImages };
       if (password) {
         payload.passwordHash = await hashPassword(password);
       }
 
       const jsonStr = JSON.stringify(payload);
-      // Use TextEncoder + manual base64 to handle large payloads
       const bytes = new TextEncoder().encode(jsonStr);
       let binary = '';
       for (let i = 0; i < bytes.length; i++) {
@@ -53,12 +78,20 @@ export default function ShareDialog({ images, open, onClose }: Props) {
       const encoded = btoa(binary);
 
       const shareId = crypto.randomUUID().slice(0, 8);
-      localStorage.setItem(`share_${shareId}`, encoded);
+      
+      try {
+        localStorage.setItem(`share_${shareId}`, encoded);
+      } catch {
+        toast.error('Images are too large to share locally. Try fewer or smaller images.');
+        setGenerating(false);
+        return;
+      }
 
       const url = `${window.location.origin}/view/${shareId}`;
       setShareUrl(url);
     } catch (err) {
       console.error('Share generation failed:', err);
+      toast.error('Failed to generate share link');
     }
     setGenerating(false);
   };

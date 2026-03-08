@@ -14,7 +14,7 @@ interface Props {
 
 export default function ImagePanel({ image, onUpdate, onRemove }: Props) {
   const canvasRef = useRef<AnnotationCanvasHandle>(null);
-  const [activeTool, setActiveTool] = useState<ToolType>('pencil');
+  const [activeTool, setActiveTool] = useState<ToolType>('square');
   const [activeColor, setActiveColor] = useState('#ef4444');
   const [activeSize, setActiveSize] = useState(4);
   const [undoStack, setUndoStack] = useState<Annotation[][]>([]);
