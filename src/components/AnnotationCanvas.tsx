@@ -110,17 +110,24 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
     img.src = imageSrc;
   }, [imageSrc]);
 
-  // Redraw
+  // Redraw — draw image on base, then annotations on a separate layer to support eraser
   const redraw = useCallback(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     const img = imgRef.current;
     if (!canvas || !ctx || !img) return;
 
+    // Draw image
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-    annotations.forEach(ann => drawAnnotation(ctx, ann));
+    // Draw annotations on an offscreen canvas so eraser only erases annotations, not the image
+    const offscreen = document.createElement('canvas');
+    offscreen.width = canvas.width;
+    offscreen.height = canvas.height;
+    const offCtx = offscreen.getContext('2d')!;
+    annotations.forEach(ann => drawAnnotation(offCtx, ann));
+    ctx.drawImage(offscreen, 0, 0);
   }, [annotations, canvasSize]);
 
   useEffect(() => {
