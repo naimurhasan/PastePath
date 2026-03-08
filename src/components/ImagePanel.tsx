@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { X, GripVertical } from 'lucide-react';
-import AnnotationCanvas from './AnnotationCanvas';
+import { useState, useRef } from 'react';
+import { X, GripVertical, Download, ClipboardCopy } from 'lucide-react';
+import AnnotationCanvas, { AnnotationCanvasHandle } from './AnnotationCanvas';
 import AnnotationToolbar from './AnnotationToolbar';
 import CaptionInput from './CaptionInput';
 import { Annotation, AnnotatedImage, ToolType } from '@/types/annotation';
+import { toast } from 'sonner';
 
 interface Props {
   image: AnnotatedImage;
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export default function ImagePanel({ image, onUpdate, onRemove }: Props) {
+  const canvasRef = useRef<AnnotationCanvasHandle>(null);
   const [activeTool, setActiveTool] = useState<ToolType>('pencil');
   const [activeColor, setActiveColor] = useState('#ef4444');
   const [activeSize, setActiveSize] = useState(4);
