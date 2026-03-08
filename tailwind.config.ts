@@ -19,6 +19,10 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        toolbar: "hsl(var(--toolbar-bg))",
+        canvas: "hsl(var(--canvas-bg))",
+        "tool-active": "hsl(var(--tool-active))",
+        "tool-hover": "hsl(var(--tool-hover))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
