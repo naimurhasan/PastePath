@@ -4,6 +4,7 @@ import { Lock, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnnotatedImage } from '@/types/annotation';
 import AnnotationCanvas from '@/components/AnnotationCanvas';
+import { supabase } from '@/integrations/supabase/client';
 
 async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -20,47 +21,38 @@ export default function ViewShare() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [passwordHash, setPasswordHash] = useState('');
+  const [rawData, setRawData] = useState<any>(null);
 
   useEffect(() => {
-    const data = localStorage.getItem(`share_${id}`);
-    if (!data) {
-      setError('Share link not found or expired');
-      return;
-    }
-    try {
-      // Decode: base64 -> bytes -> UTF-8 string -> JSON
-      const binary = atob(data);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
+    const fetchShare = async () => {
+      const { data, error: fetchError } = await supabase
+        .from('shares')
+        .select('data, password_hash')
+        .eq('id', id!)
+        .single();
+
+      if (fetchError || !data) {
+        setError('Share link not found or expired');
+        return;
       }
-      const jsonStr = new TextDecoder().decode(bytes);
-      const decoded = JSON.parse(jsonStr);
-      if (decoded.passwordHash) {
-        setPasswordHash(decoded.passwordHash);
+
+      setRawData(data.data);
+      if (data.password_hash) {
+        setPasswordHash(data.password_hash);
         setNeedsPassword(true);
       } else {
-        setImages(decoded.images);
+        setImages((data.data as any).images);
       }
-    } catch {
-      setError('Invalid share data');
-    }
+    };
+
+    if (id) fetchShare();
   }, [id]);
 
   const handleUnlock = async () => {
     const hash = await hashPassword(password);
     if (hash === passwordHash) {
-      const data = localStorage.getItem(`share_${id}`);
-      if (data) {
-        const binary = atob(data);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-          bytes[i] = binary.charCodeAt(i);
-        }
-        const decoded = JSON.parse(new TextDecoder().decode(bytes));
-        setImages(decoded.images);
-        setNeedsPassword(false);
-      }
+      setImages(rawData.images);
+      setNeedsPassword(false);
     } else {
       setError('Incorrect password');
     }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Share2, Lock, Copy, Check, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnnotatedImage } from '@/types/annotation';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface Props {
@@ -17,7 +18,6 @@ async function hashPassword(password: string): Promise<string> {
   return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// Compress a base64 data URL image to reduce size
 function compressImage(dataUrl: string, maxWidth = 1200, quality = 0.6): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image();
@@ -56,7 +56,6 @@ export default function ShareDialog({ images, open, onClose }: Props) {
     setGenerating(true);
 
     try {
-      // Compress images to fit in localStorage
       const compressedImages = await Promise.all(
         images.map(async (img) => ({
           ...img,
@@ -64,25 +63,19 @@ export default function ShareDialog({ images, open, onClose }: Props) {
         }))
       );
 
-      const payload: any = { images: compressedImages };
-      if (password) {
-        payload.passwordHash = await hashPassword(password);
-      }
-
-      const jsonStr = JSON.stringify(payload);
-      const bytes = new TextEncoder().encode(jsonStr);
-      let binary = '';
-      for (let i = 0; i < bytes.length; i++) {
-        binary += String.fromCharCode(bytes[i]);
-      }
-      const encoded = btoa(binary);
-
       const shareId = crypto.randomUUID().slice(0, 8);
-      
-      try {
-        localStorage.setItem(`share_${shareId}`, encoded);
-      } catch {
-        toast.error('Images are too large to share locally. Try fewer or smaller images.');
+      const payload: any = { images: compressedImages };
+      const pwHash = password ? await hashPassword(password) : null;
+
+      const { error } = await supabase.from('shares').insert({
+        id: shareId,
+        data: payload,
+        password_hash: pwHash,
+      });
+
+      if (error) {
+        console.error('Share insert error:', error);
+        toast.error('Failed to create share link. Try fewer or smaller images.');
         setGenerating(false);
         return;
       }
@@ -161,7 +154,7 @@ export default function ShareDialog({ images, open, onClose }: Props) {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground text-center">
-              {password ? '🔒 Password protected' : '🔓 No password'}
+              {password ? '🔒 Password protected' : '🔓 No password'} • Shareable globally!
             </p>
           </div>
         )}
