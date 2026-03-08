@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Share2, Lock, Copy, Check, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnnotatedImage } from '@/types/annotation';
@@ -22,6 +22,15 @@ export default function ShareDialog({ images, open, onClose }: Props) {
   const [shareUrl, setShareUrl] = useState('');
   const [copied, setCopied] = useState(false);
   const [generating, setGenerating] = useState(false);
+
+  // Reset state when dialog opens
+  useEffect(() => {
+    if (open) {
+      setShareUrl('');
+      setCopied(false);
+      setGenerating(false);
+    }
+  }, [open]);
 
   if (!open) return null;
 
