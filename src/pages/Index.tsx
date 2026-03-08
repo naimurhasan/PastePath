@@ -170,6 +170,21 @@ export default function Index() {
                 onUpdate={updateImage}
                 onRemove={() => removeImage(image.id)}
               />
+              {/* Add image below button */}
+              <div className="mt-3 flex flex-col items-center gap-3">
+                {insertAfterIndex === index ? (
+                  <ImageUploader onImageAdd={addImage} />
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground hover:text-foreground"
+                    onClick={() => setInsertAfterIndex(index)}
+                  >
+                    <Plus size={14} /> Add image below
+                  </Button>
+                )}
+              </div>
             </div>
           ))}
         </div>
