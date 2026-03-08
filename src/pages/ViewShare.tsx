@@ -52,7 +52,12 @@ export default function ViewShare() {
     if (hash === passwordHash) {
       const data = localStorage.getItem(`share_${id}`);
       if (data) {
-        const decoded = JSON.parse(decodeURIComponent(atob(data)));
+        const binary = atob(data);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        const decoded = JSON.parse(new TextDecoder().decode(bytes));
         setImages(decoded.images);
         setNeedsPassword(false);
       }

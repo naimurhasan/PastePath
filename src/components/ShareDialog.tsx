@@ -37,19 +37,29 @@ export default function ShareDialog({ images, open, onClose }: Props) {
   const generateShareLink = async () => {
     setGenerating(true);
 
-    // Encode data as base64 in URL (client-side only for now)
-    const payload: any = { images };
-    if (password) {
-      payload.passwordHash = await hashPassword(password);
+    try {
+      const payload: any = { images };
+      if (password) {
+        payload.passwordHash = await hashPassword(password);
+      }
+
+      const jsonStr = JSON.stringify(payload);
+      // Use TextEncoder + manual base64 to handle large payloads
+      const bytes = new TextEncoder().encode(jsonStr);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      const encoded = btoa(binary);
+
+      const shareId = crypto.randomUUID().slice(0, 8);
+      localStorage.setItem(`share_${shareId}`, encoded);
+
+      const url = `${window.location.origin}/view/${shareId}`;
+      setShareUrl(url);
+    } catch (err) {
+      console.error('Share generation failed:', err);
     }
-
-    const encoded = btoa(encodeURIComponent(JSON.stringify(payload)));
-    // For large payloads, use localStorage + ID
-    const shareId = crypto.randomUUID().slice(0, 8);
-    localStorage.setItem(`share_${shareId}`, encoded);
-
-    const url = `${window.location.origin}/view/${shareId}`;
-    setShareUrl(url);
     setGenerating(false);
   };
 
