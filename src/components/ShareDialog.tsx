@@ -23,6 +23,15 @@ export default function ShareDialog({ images, open, onClose }: Props) {
   const [copied, setCopied] = useState(false);
   const [generating, setGenerating] = useState(false);
 
+  // Reset state when dialog opens
+  useEffect(() => {
+    if (open) {
+      setShareUrl('');
+      setCopied(false);
+      setGenerating(false);
+    }
+  }, [open]);
+
   if (!open) return null;
 
   const generateShareLink = async () => {
