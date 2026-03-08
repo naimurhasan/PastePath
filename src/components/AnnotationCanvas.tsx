@@ -16,12 +16,21 @@ interface Props {
 }
 
 function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
-  ctx.strokeStyle = ann.color;
-  ctx.lineWidth = ann.size;
+  ctx.save();
+  
+  if (ann.tool === 'eraser') {
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.strokeStyle = 'rgba(0,0,0,1)';
+    ctx.lineWidth = ann.size * 4;
+  } else {
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.strokeStyle = ann.color;
+    ctx.lineWidth = ann.size;
+  }
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
-  if (ann.tool === 'pencil' && ann.points.length > 1) {
+  if ((ann.tool === 'pencil' || ann.tool === 'eraser') && ann.points.length > 1) {
     ctx.beginPath();
     ctx.moveTo(ann.points[0].x, ann.points[0].y);
     for (let i = 1; i < ann.points.length; i++) {
@@ -65,6 +74,8 @@ function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
     ctx.lineTo(e.x - headLen * Math.cos(angle + Math.PI / 6), e.y - headLen * Math.sin(angle + Math.PI / 6));
     ctx.stroke();
   }
+
+  ctx.restore();
 }
 
 const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function AnnotationCanvas({
@@ -99,17 +110,24 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
     img.src = imageSrc;
   }, [imageSrc]);
 
-  // Redraw
+  // Redraw — draw image on base, then annotations on a separate layer to support eraser
   const redraw = useCallback(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     const img = imgRef.current;
     if (!canvas || !ctx || !img) return;
 
+    // Draw image
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-    annotations.forEach(ann => drawAnnotation(ctx, ann));
+    // Draw annotations on an offscreen canvas so eraser only erases annotations, not the image
+    const offscreen = document.createElement('canvas');
+    offscreen.width = canvas.width;
+    offscreen.height = canvas.height;
+    const offCtx = offscreen.getContext('2d')!;
+    annotations.forEach(ann => drawAnnotation(offCtx, ann));
+    ctx.drawImage(offscreen, 0, 0);
   }, [annotations, canvasSize]);
 
   useEffect(() => {
@@ -130,7 +148,6 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
   };
 
   const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
-    if (activeTool === 'select') return;
     e.preventDefault();
     const pos = getPos(e);
     setDrawing(true);
@@ -139,26 +156,31 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
   };
 
   const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!drawing || activeTool === 'select') return;
+    if (!drawing) return;
     e.preventDefault();
     const pos = getPos(e);
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (!ctx || !canvas) return;
 
-    if (activeTool === 'pencil') {
+    if (activeTool === 'pencil' || activeTool === 'eraser') {
       setCurrentPoints(prev => [...prev, pos]);
-      // Live draw
       redraw();
       const pts = [...currentPoints, pos];
-      ctx.strokeStyle = activeColor;
-      ctx.lineWidth = activeSize;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.beginPath();
-      ctx.moveTo(pts[0].x, pts[0].y);
-      pts.forEach(p => ctx.lineTo(p.x, p.y));
-      ctx.stroke();
+      const preview: Annotation = {
+        id: 'preview',
+        tool: activeTool,
+        color: activeColor,
+        size: activeSize,
+        points: pts,
+      };
+      // Draw on offscreen for eraser support
+      const offscreen = document.createElement('canvas');
+      offscreen.width = canvas.width;
+      offscreen.height = canvas.height;
+      const offCtx = offscreen.getContext('2d')!;
+      drawAnnotation(offCtx, preview);
+      ctx.drawImage(offscreen, 0, 0);
     } else {
       // Shape preview
       redraw();
@@ -176,10 +198,10 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
   };
 
   const handleEnd = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!drawing || activeTool === 'select') return;
+    if (!drawing) return;
     e.preventDefault();
     const pos = getPos(e);
-    const finalPoints = activeTool === 'pencil' ? [...currentPoints, pos] : [];
+    const finalPoints = (activeTool === 'pencil' || activeTool === 'eraser') ? [...currentPoints, pos] : [];
 
     const annotation: Annotation = {
       id: crypto.randomUUID(),

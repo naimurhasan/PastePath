@@ -28,7 +28,14 @@ export default function ViewShare() {
       return;
     }
     try {
-      const decoded = JSON.parse(decodeURIComponent(atob(data)));
+      // Decode: base64 -> bytes -> UTF-8 string -> JSON
+      const binary = atob(data);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      const jsonStr = new TextDecoder().decode(bytes);
+      const decoded = JSON.parse(jsonStr);
       if (decoded.passwordHash) {
         setPasswordHash(decoded.passwordHash);
         setNeedsPassword(true);
@@ -45,7 +52,12 @@ export default function ViewShare() {
     if (hash === passwordHash) {
       const data = localStorage.getItem(`share_${id}`);
       if (data) {
-        const decoded = JSON.parse(decodeURIComponent(atob(data)));
+        const binary = atob(data);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        const decoded = JSON.parse(new TextDecoder().decode(bytes));
         setImages(decoded.images);
         setNeedsPassword(false);
       }
@@ -119,7 +131,7 @@ export default function ViewShare() {
               <AnnotationCanvas
                 imageSrc={image.originalSrc}
                 annotations={image.annotations}
-                activeTool="select"
+                activeTool="pencil"
                 activeColor="#000"
                 activeSize={2}
                 onAnnotationAdd={() => {}}
