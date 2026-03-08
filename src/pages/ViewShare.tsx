@@ -119,7 +119,7 @@ export default function ViewShare() {
               <AnnotationCanvas
                 imageSrc={image.originalSrc}
                 annotations={image.annotations}
-                activeTool="select"
+                activeTool="pencil"
                 activeColor="#000"
                 activeSize={2}
                 onAnnotationAdd={() => {}}
