@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Lock, ArrowLeft } from 'lucide-react';
+import { Lock, ArrowLeft, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnnotatedImage } from '@/types/annotation';
 import AnnotationCanvas from '@/components/AnnotationCanvas';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
