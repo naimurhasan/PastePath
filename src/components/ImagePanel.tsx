@@ -107,6 +107,7 @@ export default function ImagePanel({ image, onUpdate, onRemove }: Props) {
       {/* Canvas */}
       <div className="p-4">
         <AnnotationCanvas
+          ref={canvasRef}
           imageSrc={image.originalSrc}
           annotations={image.annotations}
           activeTool={activeTool}

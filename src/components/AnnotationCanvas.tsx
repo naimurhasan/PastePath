@@ -197,6 +197,13 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
     setStartPoint(null);
   };
 
+  useImperativeHandle(ref, () => ({
+    toBlob: () => new Promise((resolve) => {
+      canvasRef.current?.toBlob(resolve, 'image/png');
+    }),
+    toDataURL: () => canvasRef.current?.toDataURL('image/png') || '',
+  }), []);
+
   return (
     <div ref={containerRef} className="w-full flex justify-center">
       <canvas
@@ -215,4 +222,6 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
       />
     </div>
   );
-}
+});
+
+export default AnnotationCanvas;
