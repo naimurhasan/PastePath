@@ -11,6 +11,7 @@ export default function Index() {
   const [layout, setLayout] = useState<LayoutDirection>('vertical');
   const [showUploader, setShowUploader] = useState(true);
   const [shareOpen, setShareOpen] = useState(false);
+  const [insertAfterIndex, setInsertAfterIndex] = useState<number | null>(null);
 
   // Global paste handler
   useEffect(() => {
@@ -42,9 +43,17 @@ export default function Index() {
       annotations: [],
       caption: '',
     };
-    setImages(prev => [...prev, newImage]);
+    setImages(prev => {
+      if (insertAfterIndex !== null) {
+        const copy = [...prev];
+        copy.splice(insertAfterIndex + 1, 0, newImage);
+        return copy;
+      }
+      return [...prev, newImage];
+    });
     setShowUploader(false);
-  }, []);
+    setInsertAfterIndex(null);
+  }, [insertAfterIndex]);
 
   const updateImage = (updated: AnnotatedImage) => {
     setImages(prev => prev.map(img => img.id === updated.id ? updated : img));
@@ -161,6 +170,21 @@ export default function Index() {
                 onUpdate={updateImage}
                 onRemove={() => removeImage(image.id)}
               />
+              {/* Add image below button */}
+              <div className="mt-3 flex flex-col items-center gap-3">
+                {insertAfterIndex === index ? (
+                  <ImageUploader onImageAdd={addImage} />
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground hover:text-foreground"
+                    onClick={() => setInsertAfterIndex(index)}
+                  >
+                    <Plus size={14} /> Add image below
+                  </Button>
+                )}
+              </div>
             </div>
           ))}
         </div>
