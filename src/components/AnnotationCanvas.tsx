@@ -1,5 +1,10 @@
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { Annotation, DrawingPoint, ToolType } from '@/types/annotation';
+
+export interface AnnotationCanvasHandle {
+  toBlob: () => Promise<Blob | null>;
+  toDataURL: () => string;
+}
 
 interface Props {
   imageSrc: string;
@@ -62,9 +67,9 @@ function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
   }
 }
 
-export default function AnnotationCanvas({
+const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function AnnotationCanvas({
   imageSrc, annotations, activeTool, activeColor, activeSize, onAnnotationAdd,
-}: Props) {
+}, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
@@ -192,6 +197,13 @@ export default function AnnotationCanvas({
     setStartPoint(null);
   };
 
+  useImperativeHandle(ref, () => ({
+    toBlob: () => new Promise((resolve) => {
+      canvasRef.current?.toBlob(resolve, 'image/png');
+    }),
+    toDataURL: () => canvasRef.current?.toDataURL('image/png') || '',
+  }), []);
+
   return (
     <div ref={containerRef} className="w-full flex justify-center">
       <canvas
@@ -210,4 +222,6 @@ export default function AnnotationCanvas({
       />
     </div>
   );
-}
+});
+
+export default AnnotationCanvas;

@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { X, GripVertical } from 'lucide-react';
-import AnnotationCanvas from './AnnotationCanvas';
+import { useState, useRef } from 'react';
+import { X, GripVertical, Download, ClipboardCopy } from 'lucide-react';
+import AnnotationCanvas, { AnnotationCanvasHandle } from './AnnotationCanvas';
 import AnnotationToolbar from './AnnotationToolbar';
 import CaptionInput from './CaptionInput';
 import { Annotation, AnnotatedImage, ToolType } from '@/types/annotation';
+import { toast } from 'sonner';
 
 interface Props {
   image: AnnotatedImage;
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export default function ImagePanel({ image, onUpdate, onRemove }: Props) {
+  const canvasRef = useRef<AnnotationCanvasHandle>(null);
   const [activeTool, setActiveTool] = useState<ToolType>('pencil');
   const [activeColor, setActiveColor] = useState('#ef4444');
   const [activeSize, setActiveSize] = useState(4);
@@ -46,6 +48,24 @@ export default function ImagePanel({ image, onUpdate, onRemove }: Props) {
     onUpdate({ ...image, annotations: [] });
   };
 
+  const handleCopyToClipboard = async () => {
+    const blob = await canvasRef.current?.toBlob();
+    if (blob) {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      toast.success('Copied to clipboard');
+    }
+  };
+
+  const handleDownload = () => {
+    const url = canvasRef.current?.toDataURL();
+    if (url) {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `annotated-${image.id.slice(0, 8)}.png`;
+      a.click();
+    }
+  };
+
   return (
     <div className="image-card flex flex-col gap-0">
       {/* Header */}
@@ -54,9 +74,17 @@ export default function ImagePanel({ image, onUpdate, onRemove }: Props) {
           <GripVertical size={16} />
           <span className="text-xs font-mono">Step {image.id.slice(0, 4)}</span>
         </div>
-        <button onClick={onRemove} className="text-muted-foreground hover:text-destructive transition-colors">
-          <X size={16} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button onClick={handleCopyToClipboard} className="text-muted-foreground hover:text-foreground transition-colors p-1" title="Copy to clipboard">
+            <ClipboardCopy size={16} />
+          </button>
+          <button onClick={handleDownload} className="text-muted-foreground hover:text-foreground transition-colors p-1" title="Download">
+            <Download size={16} />
+          </button>
+          <button onClick={onRemove} className="text-muted-foreground hover:text-destructive transition-colors p-1">
+            <X size={16} />
+          </button>
+        </div>
       </div>
 
       {/* Toolbar */}
@@ -79,6 +107,7 @@ export default function ImagePanel({ image, onUpdate, onRemove }: Props) {
       {/* Canvas */}
       <div className="p-4">
         <AnnotationCanvas
+          ref={canvasRef}
           imageSrc={image.originalSrc}
           annotations={image.annotations}
           activeTool={activeTool}

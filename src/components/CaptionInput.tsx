@@ -32,8 +32,8 @@ export default function CaptionInput({ value, onChange, placeholder = 'Add a cap
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
-    // Auto-detect language
-    recognition.lang = '';
+    // Use browser default language for recognition
+    recognition.lang = navigator.language || 'en-US';
 
     let finalTranscript = value;
 
