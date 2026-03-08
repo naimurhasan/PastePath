@@ -11,6 +11,7 @@ export default function Index() {
   const [layout, setLayout] = useState<LayoutDirection>('vertical');
   const [showUploader, setShowUploader] = useState(true);
   const [shareOpen, setShareOpen] = useState(false);
+  const [insertAfterIndex, setInsertAfterIndex] = useState<number | null>(null);
 
   // Global paste handler
   useEffect(() => {
