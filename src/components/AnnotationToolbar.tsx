@@ -19,10 +19,10 @@ interface Props {
 }
 
 const tools: { type: ToolType; icon: React.ElementType; label: string }[] = [
-  { type: 'pencil', icon: Pencil, label: 'Pencil' },
+  { type: 'square', icon: Square, label: 'Rectangle' },
   { type: 'circle', icon: Circle, label: 'Circle' },
-  { type: 'square', icon: Square, label: 'Square' },
   { type: 'arrow', icon: ArrowUp, label: 'Arrow' },
+  { type: 'pencil', icon: Pencil, label: 'Pencil' },
   { type: 'eraser', icon: Eraser, label: 'Eraser' },
 ];
 
