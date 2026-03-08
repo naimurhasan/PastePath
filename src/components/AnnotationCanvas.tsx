@@ -96,11 +96,13 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
     img.crossOrigin = 'anonymous';
     img.onload = () => {
       imgRef.current = img;
-      // Fit to container width
       const container = containerRef.current;
       if (container) {
         const maxW = container.clientWidth;
-        const scale = Math.min(1, maxW / img.width);
+        const maxH = window.innerHeight * 0.75; // Keep within viewport
+        const scaleW = maxW / img.width;
+        const scaleH = maxH / img.height;
+        const scale = Math.min(1, scaleW, scaleH);
         setCanvasSize({ width: img.width * scale, height: img.height * scale });
       } else {
         setCanvasSize({ width: img.width, height: img.height });
