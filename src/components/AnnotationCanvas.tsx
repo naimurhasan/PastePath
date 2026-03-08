@@ -16,12 +16,21 @@ interface Props {
 }
 
 function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
-  ctx.strokeStyle = ann.color;
-  ctx.lineWidth = ann.size;
+  ctx.save();
+  
+  if (ann.tool === 'eraser') {
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.strokeStyle = 'rgba(0,0,0,1)';
+    ctx.lineWidth = ann.size * 4;
+  } else {
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.strokeStyle = ann.color;
+    ctx.lineWidth = ann.size;
+  }
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
-  if (ann.tool === 'pencil' && ann.points.length > 1) {
+  if ((ann.tool === 'pencil' || ann.tool === 'eraser') && ann.points.length > 1) {
     ctx.beginPath();
     ctx.moveTo(ann.points[0].x, ann.points[0].y);
     for (let i = 1; i < ann.points.length; i++) {
@@ -65,6 +74,8 @@ function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
     ctx.lineTo(e.x - headLen * Math.cos(angle + Math.PI / 6), e.y - headLen * Math.sin(angle + Math.PI / 6));
     ctx.stroke();
   }
+
+  ctx.restore();
 }
 
 const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function AnnotationCanvas({
