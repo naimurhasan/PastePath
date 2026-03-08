@@ -161,6 +161,16 @@ export default function Index() {
                 onUpdate={updateImage}
                 onRemove={() => removeImage(image.id)}
               />
+              <div className="mt-3 flex justify-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowUploader(true)}
+                >
+                  <Plus size={14} /> Add image below
+                </Button>
+              </div>
             </div>
           ))}
         </div>
