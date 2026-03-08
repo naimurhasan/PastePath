@@ -67,9 +67,9 @@ function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
   }
 }
 
-export default function AnnotationCanvas({
+const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function AnnotationCanvas({
   imageSrc, annotations, activeTool, activeColor, activeSize, onAnnotationAdd,
-}: Props) {
+}, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
