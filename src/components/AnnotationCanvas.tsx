@@ -1,5 +1,10 @@
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { Annotation, DrawingPoint, ToolType } from '@/types/annotation';
+
+export interface AnnotationCanvasHandle {
+  toBlob: () => Promise<Blob | null>;
+  toDataURL: () => string;
+}
 
 interface Props {
   imageSrc: string;
