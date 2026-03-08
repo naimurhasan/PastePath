@@ -13,6 +13,21 @@ export default function Index() {
   const [shareOpen, setShareOpen] = useState(false);
   const [insertAfterIndex, setInsertAfterIndex] = useState<number | null>(null);
 
+  // Load cloned images from sessionStorage
+  useEffect(() => {
+    const cloned = sessionStorage.getItem('clone_images');
+    if (cloned) {
+      try {
+        const parsed = JSON.parse(cloned) as AnnotatedImage[];
+        // Give new IDs so they're independent
+        const newImages = parsed.map(img => ({ ...img, id: crypto.randomUUID() }));
+        setImages(newImages);
+        setShowUploader(false);
+      } catch { /* ignore */ }
+      sessionStorage.removeItem('clone_images');
+    }
+  }, []);
+
   // Global paste handler
   useEffect(() => {
     const handler = (e: ClipboardEvent) => {

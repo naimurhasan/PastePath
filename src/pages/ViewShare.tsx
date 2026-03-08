@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Lock, ArrowLeft } from 'lucide-react';
+import { Lock, ArrowLeft, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnnotatedImage } from '@/types/annotation';
 import AnnotationCanvas from '@/components/AnnotationCanvas';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -113,6 +114,17 @@ export default function ViewShare() {
             <ArrowLeft size={16} /> Back to editor
           </Button>
           <h1 className="text-lg font-semibold text-foreground">Shared Annotations</h1>
+          <Button
+            size="sm"
+            onClick={() => {
+              // Store images in sessionStorage and navigate to editor
+              sessionStorage.setItem('clone_images', JSON.stringify(images));
+              navigate('/');
+              toast.success('Cloned to editor!');
+            }}
+          >
+            <Copy size={16} /> Clone to Editor
+          </Button>
         </div>
         {images.map((image, index) => (
           <div key={image.id} className="image-card">
