@@ -43,9 +43,17 @@ export default function Index() {
       annotations: [],
       caption: '',
     };
-    setImages(prev => [...prev, newImage]);
+    setImages(prev => {
+      if (insertAfterIndex !== null) {
+        const copy = [...prev];
+        copy.splice(insertAfterIndex + 1, 0, newImage);
+        return copy;
+      }
+      return [...prev, newImage];
+    });
     setShowUploader(false);
-  }, []);
+    setInsertAfterIndex(null);
+  }, [insertAfterIndex]);
 
   const updateImage = (updated: AnnotatedImage) => {
     setImages(prev => prev.map(img => img.id === updated.id ? updated : img));
