@@ -201,7 +201,7 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
     if (!drawing) return;
     e.preventDefault();
     const pos = getPos(e);
-    const finalPoints = activeTool === 'pencil' ? [...currentPoints, pos] : [];
+    const finalPoints = (activeTool === 'pencil' || activeTool === 'eraser') ? [...currentPoints, pos] : [];
 
     const annotation: Annotation = {
       id: crypto.randomUUID(),

@@ -1,4 +1,4 @@
-import { Pencil, Circle, Square, ArrowUp, MousePointer, Undo2, Redo2, Trash2 } from 'lucide-react';
+import { Pencil, Circle, Square, ArrowUp, Eraser, Undo2, Redo2, Trash2 } from 'lucide-react';
 import { ToolType } from '@/types/annotation';
 
 const COLORS = ['#22d3ee', '#ef4444', '#22c55e', '#f59e0b', '#a855f7', '#ffffff', '#000000'];
@@ -19,11 +19,11 @@ interface Props {
 }
 
 const tools: { type: ToolType; icon: React.ElementType; label: string }[] = [
-  { type: 'select', icon: MousePointer, label: 'Select' },
   { type: 'pencil', icon: Pencil, label: 'Pencil' },
   { type: 'circle', icon: Circle, label: 'Circle' },
   { type: 'square', icon: Square, label: 'Square' },
   { type: 'arrow', icon: ArrowUp, label: 'Arrow' },
+  { type: 'eraser', icon: Eraser, label: 'Eraser' },
 ];
 
 export default function AnnotationToolbar({
