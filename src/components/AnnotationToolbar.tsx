@@ -18,12 +18,12 @@ interface Props {
   canRedo: boolean;
 }
 
-const tools: { type: ToolType; icon: React.ElementType; label: string }[] = [
-  { type: 'square', icon: Square, label: 'Rectangle' },
-  { type: 'circle', icon: Circle, label: 'Circle' },
-  { type: 'arrow', icon: ArrowUp, label: 'Arrow' },
-  { type: 'pencil', icon: Pencil, label: 'Pencil' },
-  { type: 'eraser', icon: Eraser, label: 'Eraser' },
+const tools: { type: ToolType; icon: React.ElementType; label: string; shortcut: string }[] = [
+  { type: 'square', icon: Square, label: 'Rectangle', shortcut: '1' },
+  { type: 'circle', icon: Circle, label: 'Circle', shortcut: '2' },
+  { type: 'arrow', icon: ArrowUp, label: 'Arrow', shortcut: '3' },
+  { type: 'pencil', icon: Pencil, label: 'Pencil', shortcut: '4' },
+  { type: 'eraser', icon: Eraser, label: 'Eraser', shortcut: '5' },
 ];
 
 export default function AnnotationToolbar({
