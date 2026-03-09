@@ -74,6 +74,8 @@ export default function ImagePanel({ image, onUpdate, onRemove }: Props) {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [undoStack, redoStack, image.annotations]);
+
+  const handleClear = () => {
     setUndoStack(prev => [...prev, image.annotations]);
     setRedoStack([]);
     onUpdate({ ...image, annotations: [] });
