@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X, GripVertical, Download, ClipboardCopy } from 'lucide-react';
 import AnnotationCanvas, { AnnotationCanvasHandle } from './AnnotationCanvas';
 import AnnotationToolbar from './AnnotationToolbar';
