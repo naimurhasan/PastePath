@@ -157,8 +157,9 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
   };
 
   const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
-    // Middle mouse button or space+click for panning
-    if ('button' in e && e.button === 1) {
+    // Middle mouse button OR hand tool for panning
+    const isMiddleButton = 'button' in e && e.button === 1;
+    if (isMiddleButton || activeTool === 'hand') {
       e.preventDefault();
       setIsPanning(true);
       const clientX = 'clientX' in e ? e.clientX : 0;

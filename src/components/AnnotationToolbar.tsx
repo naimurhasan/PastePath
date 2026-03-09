@@ -24,6 +24,7 @@ const tools: { type: ToolType; icon: React.ElementType; label: string; shortcut:
   { type: 'arrow', icon: ArrowUp, label: 'Arrow', shortcut: '3' },
   { type: 'pencil', icon: Pencil, label: 'Pencil', shortcut: '4' },
   { type: 'eraser', icon: Eraser, label: 'Eraser', shortcut: '5' },
+  { type: 'hand', icon: Hand, label: 'Hand (Pan & Zoom)', shortcut: '6' },
 ];
 
 export default function AnnotationToolbar({
