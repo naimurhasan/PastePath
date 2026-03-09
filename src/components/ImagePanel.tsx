@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X, GripVertical, Download, ClipboardCopy } from 'lucide-react';
 import AnnotationCanvas, { AnnotationCanvasHandle } from './AnnotationCanvas';
 import AnnotationToolbar from './AnnotationToolbar';
@@ -41,6 +41,39 @@ export default function ImagePanel({ image, onUpdate, onRemove }: Props) {
     setRedoStack(r => r.slice(0, -1));
     onUpdate({ ...image, annotations: next });
   };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // Skip if typing in an input/textarea
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      // Ctrl+Z / Ctrl+Shift+Z
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          handleRedo();
+        } else {
+          handleUndo();
+        }
+        return;
+      }
+
+      // Tool shortcuts 1-5
+      const toolMap: Record<string, ToolType> = {
+        '1': 'square',
+        '2': 'circle',
+        '3': 'arrow',
+        '4': 'pencil',
+        '5': 'eraser',
+      };
+      if (toolMap[e.key]) {
+        setActiveTool(toolMap[e.key]);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [undoStack, redoStack, image.annotations]);
 
   const handleClear = () => {
     setUndoStack(prev => [...prev, image.annotations]);

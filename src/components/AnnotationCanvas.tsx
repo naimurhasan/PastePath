@@ -248,13 +248,6 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
     setStartPoint(null);
   };
 
-  // Wheel zoom
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    setZoom(prev => Math.max(0.25, Math.min(4, prev + delta)));
-  };
-
   const handleZoomIn = () => setZoom(prev => Math.min(4, prev + 0.25));
   const handleZoomOut = () => setZoom(prev => Math.max(0.25, prev - 0.25));
   const handleResetView = () => { setZoom(1); setPan({ x: 0, y: 0 }); };
@@ -291,7 +284,7 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
           background: 'hsl(var(--canvas-bg))',
           maxHeight: Math.min(window.innerHeight * 0.6, 600),
         }}
-        onWheel={handleWheel}
+        
       >
         <div
           className="flex justify-center"

@@ -18,12 +18,12 @@ interface Props {
   canRedo: boolean;
 }
 
-const tools: { type: ToolType; icon: React.ElementType; label: string }[] = [
-  { type: 'square', icon: Square, label: 'Rectangle' },
-  { type: 'circle', icon: Circle, label: 'Circle' },
-  { type: 'arrow', icon: ArrowUp, label: 'Arrow' },
-  { type: 'pencil', icon: Pencil, label: 'Pencil' },
-  { type: 'eraser', icon: Eraser, label: 'Eraser' },
+const tools: { type: ToolType; icon: React.ElementType; label: string; shortcut: string }[] = [
+  { type: 'square', icon: Square, label: 'Rectangle', shortcut: '1' },
+  { type: 'circle', icon: Circle, label: 'Circle', shortcut: '2' },
+  { type: 'arrow', icon: ArrowUp, label: 'Arrow', shortcut: '3' },
+  { type: 'pencil', icon: Pencil, label: 'Pencil', shortcut: '4' },
+  { type: 'eraser', icon: Eraser, label: 'Eraser', shortcut: '5' },
 ];
 
 export default function AnnotationToolbar({
@@ -34,12 +34,12 @@ export default function AnnotationToolbar({
     <div className="flex flex-wrap items-center gap-2 p-3 rounded-xl bg-toolbar border border-border">
       {/* Tools */}
       <div className="flex items-center gap-1">
-        {tools.map(({ type, icon: Icon, label }) => (
+        {tools.map(({ type, icon: Icon, label, shortcut }) => (
           <button
             key={type}
             className={`tool-button ${activeTool === type ? 'active' : ''}`}
             onClick={() => onToolChange(type)}
-            title={label}
+            title={`${label} (${shortcut})`}
           >
             <Icon size={18} />
           </button>
