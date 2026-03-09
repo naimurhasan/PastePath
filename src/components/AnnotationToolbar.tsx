@@ -1,4 +1,4 @@
-import { Pencil, Circle, Square, ArrowUp, Eraser, Undo2, Redo2, Trash2 } from 'lucide-react';
+import { Pencil, Circle, Square, ArrowUp, Eraser, Hand, Undo2, Redo2, Trash2 } from 'lucide-react';
 import { ToolType } from '@/types/annotation';
 
 const COLORS = ['#22d3ee', '#ef4444', '#22c55e', '#f59e0b', '#a855f7', '#ffffff', '#000000'];
