@@ -59,13 +59,14 @@ export default function ImagePanel({ image, onUpdate, onRemove }: Props) {
         return;
       }
 
-      // Tool shortcuts 1-5
+      // Tool shortcuts 1-6
       const toolMap: Record<string, ToolType> = {
         '1': 'square',
         '2': 'circle',
         '3': 'arrow',
         '4': 'pencil',
         '5': 'eraser',
+        '6': 'hand',
       };
       if (toolMap[e.key]) {
         setActiveTool(toolMap[e.key]);
