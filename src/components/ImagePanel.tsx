@@ -69,26 +69,28 @@ export default function ImagePanel({ image, onUpdate, onRemove }: Props) {
   return (
     <div className="image-card flex flex-col gap-0">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-border">
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-border">
         <div className="flex items-center gap-2 text-muted-foreground">
-          <GripVertical size={16} />
+          <GripVertical size={14} />
           <span className="text-xs font-mono">Step {image.id.slice(0, 4)}</span>
         </div>
-        <div className="flex items-center gap-1">
-          <button onClick={handleCopyToClipboard} className="text-muted-foreground hover:text-foreground transition-colors p-1" title="Copy to clipboard">
-            <ClipboardCopy size={16} />
+        <div className="flex items-center gap-2">
+          <button onClick={handleCopyToClipboard} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-secondary" title="Copy to clipboard">
+            <ClipboardCopy size={14} />
+            <span>Copy</span>
           </button>
-          <button onClick={handleDownload} className="text-muted-foreground hover:text-foreground transition-colors p-1" title="Download">
-            <Download size={16} />
+          <button onClick={handleDownload} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-secondary" title="Download">
+            <Download size={14} />
+            <span>Download</span>
           </button>
           <button onClick={onRemove} className="text-muted-foreground hover:text-destructive transition-colors p-1">
-            <X size={16} />
+            <X size={14} />
           </button>
         </div>
       </div>
 
       {/* Toolbar */}
-      <div className="p-3 border-b border-border overflow-x-auto">
+      <div className="px-3 py-2 border-b border-border overflow-x-auto">
         <AnnotationToolbar
           activeTool={activeTool}
           onToolChange={setActiveTool}
@@ -105,7 +107,7 @@ export default function ImagePanel({ image, onUpdate, onRemove }: Props) {
       </div>
 
       {/* Canvas */}
-      <div className="p-4">
+      <div className="p-2">
         <AnnotationCanvas
           ref={canvasRef}
           imageSrc={image.originalSrc}
@@ -118,7 +120,7 @@ export default function ImagePanel({ image, onUpdate, onRemove }: Props) {
       </div>
 
       {/* Caption */}
-      <div className="px-4 pb-4">
+      <div className="px-3 pb-3">
         <CaptionInput
           value={image.caption}
           onChange={(caption) => onUpdate({ ...image, caption })}

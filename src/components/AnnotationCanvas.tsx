@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { Annotation, DrawingPoint, ToolType } from '@/types/annotation';
+import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 
 export interface AnnotationCanvasHandle {
   toBlob: () => Promise<Blob | null>;
@@ -89,8 +90,14 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
   const [startPoint, setStartPoint] = useState<DrawingPoint | null>(null);
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
   const [imageLoaded, setImageLoaded] = useState(false);
+  
+  // Zoom & pan state
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
 
-  // Load image
+  // Load image — fit within container
   useEffect(() => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -99,31 +106,31 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
       const container = containerRef.current;
       if (container) {
         const maxW = container.clientWidth;
-        const maxH = window.innerHeight * 0.75; // Keep within viewport
+        const maxH = Math.min(window.innerHeight * 0.6, 600);
         const scaleW = maxW / img.width;
         const scaleH = maxH / img.height;
         const scale = Math.min(1, scaleW, scaleH);
         setCanvasSize({ width: img.width * scale, height: img.height * scale });
       } else {
-        setCanvasSize({ width: img.width, height: img.height });
+        const maxH = Math.min(window.innerHeight * 0.6, 600);
+        const scale = Math.min(1, maxH / img.height);
+        setCanvasSize({ width: img.width * scale, height: img.height * scale });
       }
       setImageLoaded(true);
     };
     img.src = imageSrc;
   }, [imageSrc]);
 
-  // Redraw — draw image on base, then annotations on a separate layer to support eraser
+  // Redraw
   const redraw = useCallback(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     const img = imgRef.current;
     if (!canvas || !ctx || !img) return;
 
-    // Draw image
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-    // Draw annotations on an offscreen canvas so eraser only erases annotations, not the image
     const offscreen = document.createElement('canvas');
     offscreen.width = canvas.width;
     offscreen.height = canvas.height;
@@ -150,6 +157,16 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
   };
 
   const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
+    // Middle mouse button or space+click for panning
+    if ('button' in e && e.button === 1) {
+      e.preventDefault();
+      setIsPanning(true);
+      const clientX = 'clientX' in e ? e.clientX : 0;
+      const clientY = 'clientY' in e ? e.clientY : 0;
+      setPanStart({ x: clientX - pan.x, y: clientY - pan.y });
+      return;
+    }
+    
     e.preventDefault();
     const pos = getPos(e);
     setDrawing(true);
@@ -158,6 +175,13 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
   };
 
   const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (isPanning) {
+      const clientX = 'clientX' in e ? e.clientX : 0;
+      const clientY = 'clientY' in e ? e.clientY : 0;
+      setPan({ x: clientX - panStart.x, y: clientY - panStart.y });
+      return;
+    }
+    
     if (!drawing) return;
     e.preventDefault();
     const pos = getPos(e);
@@ -176,7 +200,6 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
         size: activeSize,
         points: pts,
       };
-      // Draw on offscreen for eraser support
       const offscreen = document.createElement('canvas');
       offscreen.width = canvas.width;
       offscreen.height = canvas.height;
@@ -184,7 +207,6 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
       drawAnnotation(offCtx, preview);
       ctx.drawImage(offscreen, 0, 0);
     } else {
-      // Shape preview
       redraw();
       const preview: Annotation = {
         id: 'preview',
@@ -200,6 +222,11 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
   };
 
   const handleEnd = (e: React.MouseEvent | React.TouchEvent) => {
+    if (isPanning) {
+      setIsPanning(false);
+      return;
+    }
+    
     if (!drawing) return;
     e.preventDefault();
     const pos = getPos(e);
@@ -221,6 +248,17 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
     setStartPoint(null);
   };
 
+  // Wheel zoom
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    setZoom(prev => Math.max(0.25, Math.min(4, prev + delta)));
+  };
+
+  const handleZoomIn = () => setZoom(prev => Math.min(4, prev + 0.25));
+  const handleZoomOut = () => setZoom(prev => Math.max(0.25, prev - 0.25));
+  const handleResetView = () => { setZoom(1); setPan({ x: 0, y: 0 }); };
+
   useImperativeHandle(ref, () => ({
     toBlob: () => new Promise((resolve) => {
       canvasRef.current?.toBlob(resolve, 'image/png');
@@ -229,21 +267,55 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
   }), []);
 
   return (
-    <div ref={containerRef} className="w-full flex justify-center">
-      <canvas
-        ref={canvasRef}
-        width={canvasSize.width}
-        height={canvasSize.height}
-        className="annotation-canvas rounded-lg max-w-full"
-        style={{ background: 'hsl(var(--canvas-bg))' }}
-        onMouseDown={handleStart}
-        onMouseMove={handleMove}
-        onMouseUp={handleEnd}
-        onMouseLeave={handleEnd}
-        onTouchStart={handleStart}
-        onTouchMove={handleMove}
-        onTouchEnd={handleEnd}
-      />
+    <div ref={containerRef} className="w-full flex flex-col gap-1">
+      {/* Zoom controls */}
+      <div className="flex items-center justify-end gap-1 px-1">
+        <button onClick={handleZoomOut} className="p-1 text-muted-foreground hover:text-foreground transition-colors rounded hover:bg-secondary" title="Zoom out">
+          <ZoomOut size={14} />
+        </button>
+        <span className="text-xs font-mono text-muted-foreground min-w-[3rem] text-center">
+          {Math.round(zoom * 100)}%
+        </span>
+        <button onClick={handleZoomIn} className="p-1 text-muted-foreground hover:text-foreground transition-colors rounded hover:bg-secondary" title="Zoom in">
+          <ZoomIn size={14} />
+        </button>
+        <button onClick={handleResetView} className="p-1 text-muted-foreground hover:text-foreground transition-colors rounded hover:bg-secondary" title="Reset view">
+          <RotateCcw size={14} />
+        </button>
+      </div>
+      
+      {/* Canvas viewport */}
+      <div 
+        className="overflow-hidden rounded-lg"
+        style={{ 
+          background: 'hsl(var(--canvas-bg))',
+          maxHeight: Math.min(window.innerHeight * 0.6, 600),
+        }}
+        onWheel={handleWheel}
+      >
+        <div
+          className="flex justify-center"
+          style={{
+            transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
+            transformOrigin: 'center center',
+            transition: isPanning || drawing ? 'none' : 'transform 0.15s ease',
+          }}
+        >
+          <canvas
+            ref={canvasRef}
+            width={canvasSize.width}
+            height={canvasSize.height}
+            className="annotation-canvas max-w-full"
+            onMouseDown={handleStart}
+            onMouseMove={handleMove}
+            onMouseUp={handleEnd}
+            onMouseLeave={handleEnd}
+            onTouchStart={handleStart}
+            onTouchMove={handleMove}
+            onTouchEnd={handleEnd}
+          />
+        </div>
+      </div>
     </div>
   );
 });
