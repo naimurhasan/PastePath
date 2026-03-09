@@ -292,8 +292,9 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
         style={{ 
           background: 'hsl(var(--canvas-bg))',
           maxHeight: Math.min(window.innerHeight * 0.6, 600),
+          cursor: activeTool === 'hand' ? (isPanning ? 'grabbing' : 'grab') : 'crosshair',
         }}
-        
+        onWheel={handleWheel}
       >
         <div
           className="flex justify-center"
@@ -307,7 +308,8 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
             ref={canvasRef}
             width={canvasSize.width}
             height={canvasSize.height}
-            className="annotation-canvas max-w-full"
+            className="max-w-full"
+            style={{ cursor: activeTool === 'hand' ? (isPanning ? 'grabbing' : 'grab') : 'crosshair' }}
             onMouseDown={handleStart}
             onMouseMove={handleMove}
             onMouseUp={handleEnd}
