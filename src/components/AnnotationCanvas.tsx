@@ -249,6 +249,14 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
     setStartPoint(null);
   };
 
+  // Wheel zoom only when hand tool active
+  const handleWheel = (e: React.WheelEvent) => {
+    if (activeTool !== 'hand') return;
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    setZoom(prev => Math.max(0.25, Math.min(4, prev + delta)));
+  };
+
   const handleZoomIn = () => setZoom(prev => Math.min(4, prev + 0.25));
   const handleZoomOut = () => setZoom(prev => Math.max(0.25, prev - 0.25));
   const handleResetView = () => { setZoom(1); setPan({ x: 0, y: 0 }); };
