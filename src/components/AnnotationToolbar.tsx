@@ -34,12 +34,12 @@ export default function AnnotationToolbar({
     <div className="flex flex-wrap items-center gap-2 p-3 rounded-xl bg-toolbar border border-border">
       {/* Tools */}
       <div className="flex items-center gap-1">
-        {tools.map(({ type, icon: Icon, label }) => (
+        {tools.map(({ type, icon: Icon, label, shortcut }) => (
           <button
             key={type}
             className={`tool-button ${activeTool === type ? 'active' : ''}`}
             onClick={() => onToolChange(type)}
-            title={label}
+            title={`${label} (${shortcut})`}
           >
             <Icon size={18} />
           </button>
