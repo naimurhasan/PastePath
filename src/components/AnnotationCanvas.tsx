@@ -284,7 +284,7 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
           background: 'hsl(var(--canvas-bg))',
           maxHeight: Math.min(window.innerHeight * 0.6, 600),
         }}
-        onWheel={handleWheel}
+        
       >
         <div
           className="flex justify-center"
