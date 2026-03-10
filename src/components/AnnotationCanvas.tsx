@@ -140,7 +140,7 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
     const offCtx = offscreen.getContext('2d')!;
     annotations.forEach(ann => drawAnnotation(offCtx, ann));
     ctx.drawImage(offscreen, 0, 0);
-  }, [annotations, canvasSize]);
+  }, [annotations, naturalSize]);
 
   useEffect(() => {
     if (imageLoaded) redraw();
