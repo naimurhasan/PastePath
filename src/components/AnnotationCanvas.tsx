@@ -111,11 +111,13 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
         const scaleW = maxW / img.width;
         const scaleH = maxH / img.height;
         const scale = Math.min(1, scaleW, scaleH);
-        setCanvasSize({ width: img.width * scale, height: img.height * scale });
+        setNaturalSize({ width: img.width, height: img.height });
+        setDisplaySize({ width: img.width * scale, height: img.height * scale });
       } else {
         const maxH = Math.min(window.innerHeight * 0.6, 600);
         const scale = Math.min(1, maxH / img.height);
-        setCanvasSize({ width: img.width * scale, height: img.height * scale });
+        setNaturalSize({ width: img.width, height: img.height });
+        setDisplaySize({ width: img.width * scale, height: img.height * scale });
       }
       setImageLoaded(true);
     };
