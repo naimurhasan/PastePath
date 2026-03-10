@@ -237,13 +237,15 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
     if (!drawing) return;
     e.preventDefault();
     const pos = getPos(e);
+    const sizeScale = naturalSize.width / displaySize.width;
+    const scaledSize = activeSize * sizeScale;
     const finalPoints = (activeTool === 'pencil' || activeTool === 'eraser') ? [...currentPoints, pos] : [];
 
     const annotation: Annotation = {
       id: crypto.randomUUID(),
       tool: activeTool,
       color: activeColor,
-      size: activeSize,
+      size: scaledSize,
       points: finalPoints,
       startPoint: startPoint!,
       endPoint: pos,
