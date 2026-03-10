@@ -309,10 +309,13 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
         >
           <canvas
             ref={canvasRef}
-            width={canvasSize.width}
-            height={canvasSize.height}
-            className="max-w-full"
-            style={{ cursor: activeTool === 'hand' ? (isPanning ? 'grabbing' : 'grab') : 'crosshair' }}
+            width={naturalSize.width}
+            height={naturalSize.height}
+            style={{ 
+              width: displaySize.width, 
+              height: displaySize.height,
+              cursor: activeTool === 'hand' ? (isPanning ? 'grabbing' : 'grab') : 'crosshair' 
+            }}
             onMouseDown={handleStart}
             onMouseMove={handleMove}
             onMouseUp={handleEnd}
