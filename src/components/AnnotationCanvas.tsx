@@ -88,7 +88,8 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
   const [drawing, setDrawing] = useState(false);
   const [currentPoints, setCurrentPoints] = useState<DrawingPoint[]>([]);
   const [startPoint, setStartPoint] = useState<DrawingPoint | null>(null);
-  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
+  const [naturalSize, setNaturalSize] = useState({ width: 800, height: 600 });
+  const [displaySize, setDisplaySize] = useState({ width: 800, height: 600 });
   const [imageLoaded, setImageLoaded] = useState(false);
   
   // Zoom & pan state
@@ -110,11 +111,13 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
         const scaleW = maxW / img.width;
         const scaleH = maxH / img.height;
         const scale = Math.min(1, scaleW, scaleH);
-        setCanvasSize({ width: img.width * scale, height: img.height * scale });
+        setNaturalSize({ width: img.width, height: img.height });
+        setDisplaySize({ width: img.width * scale, height: img.height * scale });
       } else {
         const maxH = Math.min(window.innerHeight * 0.6, 600);
         const scale = Math.min(1, maxH / img.height);
-        setCanvasSize({ width: img.width * scale, height: img.height * scale });
+        setNaturalSize({ width: img.width, height: img.height });
+        setDisplaySize({ width: img.width * scale, height: img.height * scale });
       }
       setImageLoaded(true);
     };
@@ -137,7 +140,7 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
     const offCtx = offscreen.getContext('2d')!;
     annotations.forEach(ann => drawAnnotation(offCtx, ann));
     ctx.drawImage(offscreen, 0, 0);
-  }, [annotations, canvasSize]);
+  }, [annotations, naturalSize]);
 
   useEffect(() => {
     if (imageLoaded) redraw();
@@ -190,6 +193,9 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
     const ctx = canvas?.getContext('2d');
     if (!ctx || !canvas) return;
 
+    const sizeScale = naturalSize.width / displaySize.width;
+    const scaledSize = activeSize * sizeScale;
+
     if (activeTool === 'pencil' || activeTool === 'eraser') {
       setCurrentPoints(prev => [...prev, pos]);
       redraw();
@@ -198,7 +204,7 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
         id: 'preview',
         tool: activeTool,
         color: activeColor,
-        size: activeSize,
+        size: scaledSize,
         points: pts,
       };
       const offscreen = document.createElement('canvas');
@@ -213,7 +219,7 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
         id: 'preview',
         tool: activeTool,
         color: activeColor,
-        size: activeSize,
+        size: scaledSize,
         points: [],
         startPoint: startPoint!,
         endPoint: pos,
@@ -231,13 +237,15 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
     if (!drawing) return;
     e.preventDefault();
     const pos = getPos(e);
+    const sizeScale = naturalSize.width / displaySize.width;
+    const scaledSize = activeSize * sizeScale;
     const finalPoints = (activeTool === 'pencil' || activeTool === 'eraser') ? [...currentPoints, pos] : [];
 
     const annotation: Annotation = {
       id: crypto.randomUUID(),
       tool: activeTool,
       color: activeColor,
-      size: activeSize,
+      size: scaledSize,
       points: finalPoints,
       startPoint: startPoint!,
       endPoint: pos,
@@ -306,10 +314,13 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
         >
           <canvas
             ref={canvasRef}
-            width={canvasSize.width}
-            height={canvasSize.height}
-            className="max-w-full"
-            style={{ cursor: activeTool === 'hand' ? (isPanning ? 'grabbing' : 'grab') : 'crosshair' }}
+            width={naturalSize.width}
+            height={naturalSize.height}
+            style={{ 
+              width: displaySize.width, 
+              height: displaySize.height,
+              cursor: activeTool === 'hand' ? (isPanning ? 'grabbing' : 'grab') : 'crosshair' 
+            }}
             onMouseDown={handleStart}
             onMouseMove={handleMove}
             onMouseUp={handleEnd}
