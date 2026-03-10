@@ -193,6 +193,9 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
     const ctx = canvas?.getContext('2d');
     if (!ctx || !canvas) return;
 
+    const sizeScale = naturalSize.width / displaySize.width;
+    const scaledSize = activeSize * sizeScale;
+
     if (activeTool === 'pencil' || activeTool === 'eraser') {
       setCurrentPoints(prev => [...prev, pos]);
       redraw();
@@ -201,7 +204,7 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
         id: 'preview',
         tool: activeTool,
         color: activeColor,
-        size: activeSize,
+        size: scaledSize,
         points: pts,
       };
       const offscreen = document.createElement('canvas');
@@ -216,7 +219,7 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
         id: 'preview',
         tool: activeTool,
         color: activeColor,
-        size: activeSize,
+        size: scaledSize,
         points: [],
         startPoint: startPoint!,
         endPoint: pos,
