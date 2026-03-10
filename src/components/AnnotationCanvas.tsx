@@ -88,7 +88,8 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
   const [drawing, setDrawing] = useState(false);
   const [currentPoints, setCurrentPoints] = useState<DrawingPoint[]>([]);
   const [startPoint, setStartPoint] = useState<DrawingPoint | null>(null);
-  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
+  const [naturalSize, setNaturalSize] = useState({ width: 800, height: 600 });
+  const [displaySize, setDisplaySize] = useState({ width: 800, height: 600 });
   const [imageLoaded, setImageLoaded] = useState(false);
   
   // Zoom & pan state
