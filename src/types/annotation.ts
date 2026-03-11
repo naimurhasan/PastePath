@@ -14,6 +14,8 @@ export interface Annotation {
   points: DrawingPoint[];
   startPoint?: DrawingPoint;
   endPoint?: DrawingPoint;
+  text?: string;
+  fontSize?: number;
 }
 
 export interface AnnotatedImage {
