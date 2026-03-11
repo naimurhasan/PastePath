@@ -1,4 +1,4 @@
-export type ToolType = 'pencil' | 'circle' | 'square' | 'arrow' | 'eraser' | 'hand';
+export type ToolType = 'pencil' | 'circle' | 'square' | 'arrow' | 'eraser' | 'hand' | 'text';
 export type LayoutDirection = 'horizontal' | 'vertical';
 
 export interface DrawingPoint {
