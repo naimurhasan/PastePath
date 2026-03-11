@@ -78,6 +78,16 @@ export default function Index() {
     setImages(prev => prev.filter(img => img.id !== id));
   };
 
+  const moveImage = (index: number, direction: 'up' | 'down') => {
+    setImages(prev => {
+      const newIndex = direction === 'up' ? index - 1 : index + 1;
+      if (newIndex < 0 || newIndex >= prev.length) return prev;
+      const copy = [...prev];
+      [copy[index], copy[newIndex]] = [copy[newIndex], copy[index]];
+      return copy;
+    });
+  };
+
   // Drop handler
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -184,6 +194,8 @@ export default function Index() {
                 image={image}
                 onUpdate={updateImage}
                 onRemove={() => removeImage(image.id)}
+                onMoveUp={index > 0 ? () => moveImage(index, 'up') : undefined}
+                onMoveDown={index < images.length - 1 ? () => moveImage(index, 'down') : undefined}
               />
               {/* Add image below button */}
               <div className="mt-3 flex flex-col items-center gap-3">
