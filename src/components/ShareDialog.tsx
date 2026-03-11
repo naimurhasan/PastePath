@@ -18,16 +18,15 @@ async function hashPassword(password: string): Promise<string> {
   return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-function compressImage(dataUrl: string, maxWidth = 1200, quality = 0.6): Promise<string> {
+function compressImage(dataUrl: string, quality = 0.55): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
-      const scale = Math.min(1, maxWidth / img.width);
       const canvas = document.createElement('canvas');
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
+      canvas.width = img.width;
+      canvas.height = img.height;
       const ctx = canvas.getContext('2d')!;
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
       resolve(canvas.toDataURL('image/jpeg', quality));
     };
     img.onerror = () => resolve(dataUrl);
