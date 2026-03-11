@@ -1,4 +1,4 @@
-import { Pencil, Circle, Square, ArrowUp, Eraser, Hand, Undo2, Redo2, Trash2 } from 'lucide-react';
+import { Pencil, Circle, Square, ArrowUp, Eraser, Hand, Type, Undo2, Redo2, Trash2 } from 'lucide-react';
 import { ToolType } from '@/types/annotation';
 
 const COLORS = ['#22d3ee', '#ef4444', '#22c55e', '#f59e0b', '#a855f7', '#ffffff', '#000000'];
@@ -24,7 +24,8 @@ const tools: { type: ToolType; icon: React.ElementType; label: string; shortcut:
   { type: 'arrow', icon: ArrowUp, label: 'Arrow', shortcut: '3' },
   { type: 'pencil', icon: Pencil, label: 'Pencil', shortcut: '4' },
   { type: 'eraser', icon: Eraser, label: 'Eraser', shortcut: '5' },
-  { type: 'hand', icon: Hand, label: 'Hand (Pan & Zoom)', shortcut: '6' },
+  { type: 'text', icon: Type, label: 'Text', shortcut: '6' },
+  { type: 'hand', icon: Hand, label: 'Hand (Pan & Zoom)', shortcut: '7' },
 ];
 
 export default function AnnotationToolbar({

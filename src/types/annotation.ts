@@ -1,4 +1,4 @@
-export type ToolType = 'pencil' | 'circle' | 'square' | 'arrow' | 'eraser' | 'hand';
+export type ToolType = 'pencil' | 'circle' | 'square' | 'arrow' | 'eraser' | 'hand' | 'text';
 export type LayoutDirection = 'horizontal' | 'vertical';
 
 export interface DrawingPoint {
@@ -14,6 +14,8 @@ export interface Annotation {
   points: DrawingPoint[];
   startPoint?: DrawingPoint;
   endPoint?: DrawingPoint;
+  text?: string;
+  fontSize?: number;
 }
 
 export interface AnnotatedImage {

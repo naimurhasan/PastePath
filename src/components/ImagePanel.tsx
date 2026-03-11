@@ -66,7 +66,8 @@ export default function ImagePanel({ image, onUpdate, onRemove }: Props) {
         '3': 'arrow',
         '4': 'pencil',
         '5': 'eraser',
-        '6': 'hand',
+        '6': 'text',
+        '7': 'hand',
       };
       if (toolMap[e.key]) {
         setActiveTool(toolMap[e.key]);

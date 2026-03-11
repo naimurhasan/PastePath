@@ -76,6 +76,18 @@ function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
     ctx.stroke();
   }
 
+  if (ann.tool === 'text' && ann.text && ann.startPoint) {
+    const fontSize = ann.fontSize || 24;
+    ctx.font = `${fontSize}px "Inter", "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
+    ctx.fillStyle = ann.color;
+    ctx.textBaseline = 'top';
+    // Support multiline
+    const lines = ann.text.split('\n');
+    lines.forEach((line, i) => {
+      ctx.fillText(line, ann.startPoint!.x, ann.startPoint!.y + i * fontSize * 1.2);
+    });
+  }
+
   ctx.restore();
 }
 
@@ -97,6 +109,11 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+
+  // Text input state
+  const [textInput, setTextInput] = useState<{ pos: DrawingPoint; visible: boolean }>({ pos: { x: 0, y: 0 }, visible: false });
+  const [textValue, setTextValue] = useState('');
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   // Load image — fit within container
   useEffect(() => {
@@ -159,6 +176,27 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
     return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
   };
 
+  // Commit text annotation
+  const commitText = useCallback(() => {
+    if (textValue.trim() && textInput.visible) {
+      const sizeScale = naturalSize.width / displaySize.width;
+      const fontSize = Math.round(activeSize * 6 * sizeScale);
+      const annotation: Annotation = {
+        id: crypto.randomUUID(),
+        tool: 'text',
+        color: activeColor,
+        size: activeSize,
+        points: [],
+        startPoint: textInput.pos,
+        text: textValue,
+        fontSize,
+      };
+      onAnnotationAdd(annotation);
+    }
+    setTextInput({ pos: { x: 0, y: 0 }, visible: false });
+    setTextValue('');
+  }, [textValue, textInput, activeColor, activeSize, naturalSize, displaySize, onAnnotationAdd]);
+
   const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
     // Middle mouse button OR hand tool for panning
     const isMiddleButton = 'button' in e && e.button === 1;
@@ -168,6 +206,21 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
       const clientX = 'clientX' in e ? e.clientX : 0;
       const clientY = 'clientY' in e ? e.clientY : 0;
       setPanStart({ x: clientX - pan.x, y: clientY - pan.y });
+      return;
+    }
+
+    // Text tool: place input at click position
+    if (activeTool === 'text') {
+      e.preventDefault();
+      // If already showing text input, commit the current one first
+      if (textInput.visible) {
+        commitText();
+      }
+      const pos = getPos(e);
+      setTextInput({ pos, visible: true });
+      setTextValue('');
+      // Focus textarea after render
+      setTimeout(() => textAreaRef.current?.focus(), 0);
       return;
     }
     
@@ -276,6 +329,21 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
     toDataURL: () => canvasRef.current?.toDataURL('image/png') || '',
   }), []);
 
+  // Calculate text overlay position in display coordinates
+  const getTextOverlayStyle = (): React.CSSProperties => {
+    if (!textInput.visible) return { display: 'none' };
+    const scaleX = displaySize.width / naturalSize.width;
+    const scaleY = displaySize.height / naturalSize.height;
+    return {
+      position: 'absolute',
+      left: textInput.pos.x * scaleX,
+      top: textInput.pos.y * scaleY,
+      transform: `scale(${zoom})`,
+      transformOrigin: 'top left',
+      zIndex: 10,
+    };
+  };
+
   return (
     <div ref={containerRef} className="w-full flex flex-col gap-1">
       {/* Zoom controls */}
@@ -296,39 +364,73 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
       
       {/* Canvas viewport */}
       <div 
-        className="overflow-hidden rounded-lg"
+        className="overflow-hidden rounded-lg relative"
         style={{ 
           background: 'hsl(var(--canvas-bg))',
           maxHeight: Math.min(window.innerHeight * 0.6, 600),
-          cursor: activeTool === 'hand' ? (isPanning ? 'grabbing' : 'grab') : 'crosshair',
+          cursor: activeTool === 'hand' ? (isPanning ? 'grabbing' : 'grab') : activeTool === 'text' ? 'text' : 'crosshair',
         }}
         onWheel={handleWheel}
       >
         <div
-          className="flex justify-center"
+          className="flex justify-center relative"
           style={{
             transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
             transformOrigin: 'center center',
             transition: isPanning || drawing ? 'none' : 'transform 0.15s ease',
           }}
         >
-          <canvas
-            ref={canvasRef}
-            width={naturalSize.width}
-            height={naturalSize.height}
-            style={{ 
-              width: displaySize.width, 
-              height: displaySize.height,
-              cursor: activeTool === 'hand' ? (isPanning ? 'grabbing' : 'grab') : 'crosshair' 
-            }}
-            onMouseDown={handleStart}
-            onMouseMove={handleMove}
-            onMouseUp={handleEnd}
-            onMouseLeave={handleEnd}
-            onTouchStart={handleStart}
-            onTouchMove={handleMove}
-            onTouchEnd={handleEnd}
-          />
+          <div className="relative">
+            <canvas
+              ref={canvasRef}
+              width={naturalSize.width}
+              height={naturalSize.height}
+              style={{ 
+                width: displaySize.width, 
+                height: displaySize.height,
+                cursor: activeTool === 'hand' ? (isPanning ? 'grabbing' : 'grab') : activeTool === 'text' ? 'text' : 'crosshair' 
+              }}
+              onMouseDown={handleStart}
+              onMouseMove={handleMove}
+              onMouseUp={handleEnd}
+              onMouseLeave={handleEnd}
+              onTouchStart={handleStart}
+              onTouchMove={handleMove}
+              onTouchEnd={handleEnd}
+            />
+            {/* Text input overlay */}
+            {textInput.visible && (
+              <div style={getTextOverlayStyle()}>
+                <textarea
+                  ref={textAreaRef}
+                  value={textValue}
+                  onChange={(e) => setTextValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      setTextInput({ pos: { x: 0, y: 0 }, visible: false });
+                      setTextValue('');
+                    }
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      commitText();
+                    }
+                  }}
+                  onBlur={commitText}
+                  placeholder="Type here…"
+                  className="bg-transparent border border-dashed outline-none resize-none min-w-[120px] min-h-[32px] p-1"
+                  style={{
+                    color: activeColor,
+                    fontSize: activeSize * 6,
+                    fontFamily: '"Inter", "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif',
+                    borderColor: 'hsl(var(--primary))',
+                    caretColor: activeColor,
+                    lineHeight: 1.2,
+                  }}
+                  autoFocus
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
