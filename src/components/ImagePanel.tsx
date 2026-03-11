@@ -14,7 +14,7 @@ interface Props {
   onMoveDown?: () => void;
 }
 
-export default function ImagePanel({ image, onUpdate, onRemove }: Props) {
+export default function ImagePanel({ image, onUpdate, onRemove, onMoveUp, onMoveDown }: Props) {
   const canvasRef = useRef<AnnotationCanvasHandle>(null);
   const [activeTool, setActiveTool] = useState<ToolType>('square');
   const [activeColor, setActiveColor] = useState('#ef4444');
