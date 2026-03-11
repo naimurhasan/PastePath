@@ -194,6 +194,8 @@ export default function Index() {
                 image={image}
                 onUpdate={updateImage}
                 onRemove={() => removeImage(image.id)}
+                onMoveUp={index > 0 ? () => moveImage(index, 'up') : undefined}
+                onMoveDown={index < images.length - 1 ? () => moveImage(index, 'down') : undefined}
               />
               {/* Add image below button */}
               <div className="mt-3 flex flex-col items-center gap-3">
