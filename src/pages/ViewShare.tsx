@@ -143,7 +143,7 @@ export default function ViewShare() {
             </div>
             {image.caption && (
               <div className="px-4 pb-4">
-                <p className="text-sm text-foreground bg-secondary rounded-lg px-4 py-3">{image.caption}</p>
+                <p className="text-sm text-foreground bg-secondary rounded-lg px-4 py-3 whitespace-pre-wrap">{image.caption}</p>
               </div>
             )}
           </div>

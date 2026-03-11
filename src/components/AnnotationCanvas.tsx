@@ -364,10 +364,10 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
       
       {/* Canvas viewport */}
       <div 
-        className="overflow-hidden rounded-lg relative"
+        className="overflow-auto rounded-lg relative"
         style={{ 
           background: 'hsl(var(--canvas-bg))',
-          maxHeight: Math.min(window.innerHeight * 0.6, 600),
+          maxHeight: Math.min(window.innerHeight * 0.65, 620),
           cursor: activeTool === 'hand' ? (isPanning ? 'grabbing' : 'grab') : activeTool === 'text' ? 'text' : 'crosshair',
         }}
         onWheel={handleWheel}
