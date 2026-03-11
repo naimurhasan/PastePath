@@ -10,6 +10,8 @@ interface Props {
   image: AnnotatedImage;
   onUpdate: (image: AnnotatedImage) => void;
   onRemove: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
 }
 
 export default function ImagePanel({ image, onUpdate, onRemove }: Props) {
