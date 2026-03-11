@@ -78,6 +78,16 @@ export default function Index() {
     setImages(prev => prev.filter(img => img.id !== id));
   };
 
+  const moveImage = (index: number, direction: 'up' | 'down') => {
+    setImages(prev => {
+      const newIndex = direction === 'up' ? index - 1 : index + 1;
+      if (newIndex < 0 || newIndex >= prev.length) return prev;
+      const copy = [...prev];
+      [copy[index], copy[newIndex]] = [copy[newIndex], copy[index]];
+      return copy;
+    });
+  };
+
   // Drop handler
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
