@@ -110,6 +110,14 @@ export default function ImagePanel({ image, onUpdate, onRemove, onMoveUp, onMove
         <div className="flex items-center gap-2 text-muted-foreground">
           <GripVertical size={14} />
           <span className="text-xs font-mono">Step {image.id.slice(0, 4)}</span>
+          <div className="flex items-center gap-0.5 ml-1">
+            <button onClick={onMoveUp} disabled={!onMoveUp} className="text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors p-0.5 rounded hover:bg-secondary" title="Move up">
+              <ChevronUp size={14} />
+            </button>
+            <button onClick={onMoveDown} disabled={!onMoveDown} className="text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors p-0.5 rounded hover:bg-secondary" title="Move down">
+              <ChevronDown size={14} />
+            </button>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={handleCopyToClipboard} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-secondary" title="Copy to clipboard">
