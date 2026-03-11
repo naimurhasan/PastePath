@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, GripVertical, Download, ClipboardCopy } from 'lucide-react';
+import { X, GripVertical, Download, ClipboardCopy, ChevronUp, ChevronDown } from 'lucide-react';
 import AnnotationCanvas, { AnnotationCanvasHandle } from './AnnotationCanvas';
 import AnnotationToolbar from './AnnotationToolbar';
 import CaptionInput from './CaptionInput';
