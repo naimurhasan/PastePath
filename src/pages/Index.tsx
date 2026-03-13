@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Share2, LayoutList, Columns } from 'lucide-react';
+import { Plus, Share2, LayoutList, Columns, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ImageUploader from '@/components/ImageUploader';
 import ImagePanel from '@/components/ImagePanel';
@@ -119,6 +119,15 @@ export default function Index() {
           </div>
 
           <div className="flex items-center gap-2">
+            <a
+              href="https://github.com/Naimur-s-Lovable/draw-annotate-share"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-border rounded-lg text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+            >
+              <Star size={14} className="text-yellow-500 fill-yellow-500" />
+              Star on GitHub
+            </a>
             {/* Layout toggle */}
             <div className="flex items-center border border-border rounded-lg overflow-hidden">
               <button
