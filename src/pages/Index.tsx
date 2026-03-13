@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Share2, LayoutList, Columns } from 'lucide-react';
+import { Plus, Share2, LayoutList, Columns, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ImageUploader from '@/components/ImageUploader';
 import ImagePanel from '@/components/ImagePanel';
