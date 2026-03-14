@@ -9,10 +9,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Naimur-s-Lovable/draw-annotate-share/stargazers">
+  <a href="https://github.com/naimurhasan/PastePath/stargazers">
     <img src="https://img.shields.io/github/stars/Naimur-s-Lovable/draw-annotate-share?style=social" alt="GitHub Stars" />
   </a>
-  <a href="https://github.com/Naimur-s-Lovable/draw-annotate-share/blob/main/LICENSE">
+  <a href="https://github.com/naimurhasan/PastePath/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" />
   </a>
   <a href="https://draw-annotate-share.lovable.app">
@@ -51,7 +51,7 @@
 
 ```bash
 # Clone the repo
-git clone https://github.com/Naimur-s-Lovable/draw-annotate-share.git
+git clone https://github.com/naimurhasan/PastePath.git
 cd draw-annotate-share
 
 # Install dependencies
@@ -121,7 +121,7 @@ Contributions are welcome! Feel free to open issues or submit pull requests.
 
 If you find this project useful, please consider giving it a ⭐ on GitHub!
 
-[![Star this repo](https://img.shields.io/github/stars/Naimur-s-Lovable/draw-annotate-share?style=for-the-badge&logo=github&label=Star%20on%20GitHub)](https://github.com/Naimur-s-Lovable/draw-annotate-share)
+[![Star this repo](https://img.shields.io/github/stars/Naimur-s-Lovable/draw-annotate-share?style=for-the-badge&logo=github&label=Star%20on%20GitHub)](https://github.com/naimurhasan/PastePath)
 
 ---
 

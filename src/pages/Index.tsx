@@ -120,7 +120,7 @@ export default function Index() {
 
           <div className="flex items-center gap-2">
             <a
-              href="https://github.com/Naimur-s-Lovable/draw-annotate-share"
+              href="https://github.com/naimurhasan/PastePath"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-border rounded-lg text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
