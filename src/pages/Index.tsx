@@ -113,7 +113,7 @@ export default function Index() {
         <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <h1 className="text-lg font-bold text-foreground font-mono tracking-tight">
-              <span className="text-primary">⬡</span> SnapNote
+              <span className="text-primary">⬡</span> PastePath
             </h1>
             <span className="text-xs text-muted-foreground hidden sm:inline">Screenshot Annotation Tool</span>
           </div>

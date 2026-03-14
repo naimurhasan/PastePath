@@ -1,8 +1,4 @@
-<p align="center">
-  <img src="public/favicon.ico" width="48" alt="SnapNote Logo" />
-</p>
-
-<h1 align="center">SnapNote</h1>
+<h1 align="center">PastePath</h1>
 
 <p align="center">
   <strong>Screenshot Annotation & Sharing Tool</strong>
@@ -10,13 +6,13 @@
 
 <p align="center">
   <a href="https://github.com/naimurhasan/PastePath/stargazers">
-    <img src="https://img.shields.io/github/stars/Naimur-s-Lovable/draw-annotate-share?style=social" alt="GitHub Stars" />
+    <img src="https://img.shields.io/github/stars/naimurhasan/PastePath?style=social" alt="GitHub Stars" />
   </a>
   <a href="https://github.com/naimurhasan/PastePath/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" />
   </a>
-  <a href="https://draw-annotate-share.lovable.app">
-    <img src="https://img.shields.io/badge/demo-live-brightgreen.svg" alt="Live Demo" />
+  <a href="https://pastepath.com/">
+    <img src="https://img.shields.io/badge/pastepath.com-live-brightgreen.svg" alt="pastepath.com" />
   </a>
 </p>
 
@@ -27,7 +23,7 @@
 ---
 
 <p align="center">
-  <img src="public/screenshot.png" alt="SnapNote – annotate and share screenshots" width="800" />
+  <img src="public/screenshot.png" alt="PastePath – annotate and share screenshots" width="800" />
 </p>
 
 ---
@@ -52,7 +48,7 @@
 ```bash
 # Clone the repo
 git clone https://github.com/naimurhasan/PastePath.git
-cd draw-annotate-share
+cd PastePath
 
 # Install dependencies
 npm install
@@ -69,7 +65,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 - **Vite** — blazing-fast dev & build
 - **Tailwind CSS** — utility-first styling
 - **shadcn/ui** — accessible, composable components
-- **Lovable Cloud** — backend for sharing & persistence
+- **Supabase** — backend for sharing & persistence
 - **Canvas API** — high-resolution annotation rendering
 
 ## ⌨️ Keyboard Shortcuts
@@ -121,10 +117,10 @@ Contributions are welcome! Feel free to open issues or submit pull requests.
 
 If you find this project useful, please consider giving it a ⭐ on GitHub!
 
-[![Star this repo](https://img.shields.io/github/stars/Naimur-s-Lovable/draw-annotate-share?style=for-the-badge&logo=github&label=Star%20on%20GitHub)](https://github.com/naimurhasan/PastePath)
+[![Star this repo](https://img.shields.io/github/stars/naimurhasan/PastePath?style=for-the-badge&logo=github&label=Star%20on%20GitHub)](https://github.com/naimurhasan/PastePath)
 
 ---
 
 <p align="center">
-  Built with ❤️ using <a href="https://lovable.dev">Lovable</a>
+  Initial development started with <a href="https://lovable.dev">❤️ Lovable</a>
 </p>
