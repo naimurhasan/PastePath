@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/logo.svg" width="64" alt="PastePath Logo" />
+</p>
+
 <h1 align="center">PastePath</h1>
 
 <p align="center">

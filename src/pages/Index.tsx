@@ -112,8 +112,8 @@ export default function Index() {
       <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            <h1 className="text-lg font-bold text-foreground font-mono tracking-tight">
-              <span className="text-primary">⬡</span> PastePath
+            <h1 className="text-lg font-bold text-foreground font-mono tracking-tight flex items-center gap-2">
+              <img src="/logo.svg" alt="PastePath" className="h-6 w-6" /> PastePath
             </h1>
             <span className="text-xs text-muted-foreground hidden sm:inline">Screenshot Annotation Tool</span>
           </div>
