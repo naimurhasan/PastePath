@@ -176,6 +176,18 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
     return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
   };
 
+  const getClientPoint = (e: React.MouseEvent | React.TouchEvent) => {
+    if ('touches' in e) {
+      const touch = e.touches[0] || e.changedTouches[0];
+      return {
+        x: touch?.clientX ?? 0,
+        y: touch?.clientY ?? 0,
+      };
+    }
+
+    return { x: e.clientX, y: e.clientY };
+  };
+
   // Commit text annotation
   const commitText = useCallback(() => {
     if (textValue.trim() && textInput.visible) {
@@ -203,9 +215,8 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
     if (isMiddleButton || activeTool === 'hand') {
       e.preventDefault();
       setIsPanning(true);
-      const clientX = 'clientX' in e ? e.clientX : 0;
-      const clientY = 'clientY' in e ? e.clientY : 0;
-      setPanStart({ x: clientX - pan.x, y: clientY - pan.y });
+      const point = getClientPoint(e);
+      setPanStart({ x: point.x - pan.x, y: point.y - pan.y });
       return;
     }
 
@@ -233,9 +244,9 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
 
   const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
     if (isPanning) {
-      const clientX = 'clientX' in e ? e.clientX : 0;
-      const clientY = 'clientY' in e ? e.clientY : 0;
-      setPan({ x: clientX - panStart.x, y: clientY - panStart.y });
+      e.preventDefault();
+      const point = getClientPoint(e);
+      setPan({ x: point.x - panStart.x, y: point.y - panStart.y });
       return;
     }
     
@@ -388,7 +399,8 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(function Anno
               style={{ 
                 width: displaySize.width, 
                 height: displaySize.height,
-                cursor: activeTool === 'hand' ? (isPanning ? 'grabbing' : 'grab') : activeTool === 'text' ? 'text' : 'crosshair' 
+                cursor: activeTool === 'hand' ? (isPanning ? 'grabbing' : 'grab') : activeTool === 'text' ? 'text' : 'crosshair',
+                touchAction: 'none',
               }}
               onMouseDown={handleStart}
               onMouseMove={handleMove}
