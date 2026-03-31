@@ -106,8 +106,8 @@ export default function ImagePanel({ image, onUpdate, onRemove, onMoveUp, onMove
   return (
     <div className="image-card flex flex-col gap-0">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-1.5 border-b border-border">
-        <div className="flex items-center gap-2 text-muted-foreground">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 border-b border-border">
+        <div className="flex items-center gap-2 text-muted-foreground min-w-0">
           <GripVertical size={14} />
           <span className="text-xs font-mono">Step {image.id.slice(0, 4)}</span>
           <div className="flex items-center gap-0.5 ml-1">

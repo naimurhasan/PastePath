@@ -110,15 +110,15 @@ export default function Index() {
     >
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
-            <h1 className="text-lg font-bold text-foreground font-mono tracking-tight flex items-center gap-2">
+        <div className="max-w-7xl mx-auto flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <h1 className="text-lg font-bold text-foreground font-mono tracking-tight flex items-center gap-2 whitespace-nowrap">
               <img src="/logo.svg" alt="PastePath" className="h-6 w-6" /> PastePath
             </h1>
             <span className="text-xs text-muted-foreground hidden sm:inline">Screenshot Annotation Tool</span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap">
             <a
               href="https://github.com/naimurhasan/PastePath"
               target="_blank"
@@ -186,13 +186,13 @@ export default function Index() {
         {/* Image panels */}
         <div className={
           layout === 'horizontal'
-            ? 'flex gap-6 overflow-x-auto pb-4'
+            ? 'flex flex-col gap-6 sm:flex-row sm:overflow-x-auto sm:pb-4'
             : 'flex flex-col gap-6'
         }>
           {images.map((image, index) => (
             <div
               key={image.id}
-              className={layout === 'horizontal' ? 'min-w-[600px] flex-shrink-0' : ''}
+              className={layout === 'horizontal' ? 'sm:min-w-[600px] sm:flex-shrink-0' : ''}
             >
               <div className="mb-2">
                 <span className="text-xs font-mono text-primary font-semibold">
