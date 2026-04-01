@@ -1,0 +1,1 @@
+REVOKE SELECT (password_hash) ON public.shares FROM anon, authenticated;

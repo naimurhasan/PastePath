@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Share2, Lock, Copy, Check, Eye, EyeOff } from 'lucide-react';
+import { Share2, Lock, Copy, Check, Eye, EyeOff, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnnotatedImage } from '@/types/annotation';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,13 +9,6 @@ interface Props {
   images: AnnotatedImage[];
   open: boolean;
   onClose: () => void;
-}
-
-async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 function compressImage(dataUrl: string, quality = 0.55): Promise<string> {
@@ -34,24 +27,43 @@ function compressImage(dataUrl: string, quality = 0.55): Promise<string> {
   });
 }
 
+const RETENTION_OPTIONS = [
+  { value: '1year', label: '1 Year', days: 365 },
+  { value: 'never', label: 'Never', days: null },
+  { value: '1month', label: '1 Month', days: 30 },
+  { value: '1week', label: '1 Week', days: 7 },
+  { value: '1day', label: '1 Day', days: 1 },
+];
+
 export default function ShareDialog({ images, open, onClose }: Props) {
+  const [title, setTitle] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
   const [copied, setCopied] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [retention, setRetention] = useState('1year');
 
   useEffect(() => {
     if (open) {
+      setTitle('');
+      setPassword('');
+      setShowPassword(false);
       setShareUrl('');
       setCopied(false);
       setGenerating(false);
+      setRetention('1year');
     }
   }, [open]);
 
   if (!open) return null;
 
   const generateShareLink = async () => {
+    if (!title.trim()) {
+      toast.error('Please enter a title for your share');
+      return;
+    }
+
     setGenerating(true);
 
     try {
@@ -62,36 +74,37 @@ export default function ShareDialog({ images, open, onClose }: Props) {
         }))
       );
 
-      const shareId = crypto.randomUUID().slice(0, 8);
-      const payload: any = { images: compressedImages };
-      const pwHash = password ? await hashPassword(password) : null;
+      const selectedOption = RETENTION_OPTIONS.find((o) => o.value === retention);
+      const autoDeleteAt = selectedOption?.days
+        ? new Date(Date.now() + selectedOption.days * 24 * 60 * 60 * 1000).toISOString()
+        : null;
 
-      const { error } = await supabase.from('shares').insert({
-        id: shareId,
-        data: payload,
-        password_hash: pwHash,
+      // Use edge function for server-side validation, ID generation, and bcrypt hashing
+      const { data, error } = await supabase.functions.invoke('create-share', {
+        body: {
+          title: title.trim(),
+          password: password || null,
+          data: { images: compressedImages },
+          auto_delete_at: autoDeleteAt,
+        },
       });
 
-      if (error) {
-        console.error('Share insert error:', error);
+      if (error || !data?.id) {
+        console.error('Share creation error:', error);
         toast.error('Failed to create share link. Try fewer or smaller images.');
         setGenerating(false);
         return;
       }
 
-      const url = `${window.location.origin}/view/${shareId}`;
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const url = `${supabaseUrl}/functions/v1/og-metadata?id=${data.id}`;
       setShareUrl(url);
+      toast.success(`Share will ${selectedOption?.days ? `auto-delete in ${selectedOption.label.toLowerCase()}` : `never auto-delete`}`);
     } catch (err) {
       console.error('Share generation failed:', err);
       toast.error('Failed to generate share link');
     }
     setGenerating(false);
-  };
-
-  const copyUrl = async () => {
-    await navigator.clipboard.writeText(shareUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -107,9 +120,47 @@ export default function ShareDialog({ images, open, onClose }: Props) {
           </div>
         </div>
 
+        {/* Title */}
+        <div className="mb-4">
+          <label className="block text-sm text-muted-foreground mb-2 font-medium">
+            Share Title
+          </label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g., Project Screenshot"
+            className="w-full px-4 py-2.5 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+
+        {/* Retention Selector */}
+        <div className="mb-4">
+          <label className="flex items-center gap-2 text-sm text-muted-foreground mb-2 font-medium">
+            <Calendar size={14} />
+            Auto-delete
+          </label>
+          <select
+            value={retention}
+            onChange={(e) => setRetention(e.target.value)}
+            className="w-full px-4 py-2.5 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            {RETENTION_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground mt-1.5">
+            {RETENTION_OPTIONS.find((o) => o.value === retention)?.days
+              ? `Share will be deleted after ${RETENTION_OPTIONS.find((o) => o.value === retention)?.label.toLowerCase()}`
+              : 'Share will never be automatically deleted'}
+          </p>
+        </div>
+
         {/* Password */}
         <div className="mb-4">
-          <label className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+          <label className="flex items-center gap-2 text-sm text-muted-foreground mb-2 font-medium">
             <Lock size={14} />
             Password protection (optional)
           </label>
@@ -118,7 +169,7 @@ export default function ShareDialog({ images, open, onClose }: Props) {
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter password..."
+              placeholder="Leave blank for public share"
               className="w-full px-4 py-2.5 pr-10 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <button
@@ -128,17 +179,12 @@ export default function ShareDialog({ images, open, onClose }: Props) {
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
-          {password && (
-            <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
-              <Lock size={10} /> Password will be encrypted with SHA-256
-            </p>
-          )}
         </div>
 
         {/* Generate */}
         {!shareUrl ? (
-          <Button className="w-full" onClick={generateShareLink} disabled={generating}>
-            {generating ? 'Generating...' : 'Generate Share Link'}
+          <Button className="w-full" onClick={generateShareLink} disabled={generating || !title.trim()}>
+            {generating ? 'Creating...' : 'Create Share'}
           </Button>
         ) : (
           <div className="space-y-3">
@@ -148,7 +194,11 @@ export default function ShareDialog({ images, open, onClose }: Props) {
                 value={shareUrl}
                 className="flex-1 px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm font-mono truncate"
               />
-              <Button size="icon" onClick={copyUrl}>
+              <Button size="icon" onClick={() => {
+                navigator.clipboard.writeText(shareUrl);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              }}>
                 {copied ? <Check size={16} /> : <Copy size={16} />}
               </Button>
             </div>

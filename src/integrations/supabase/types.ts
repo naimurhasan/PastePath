@@ -16,22 +16,34 @@ export type Database = {
     Tables: {
       shares: {
         Row: {
+          auto_delete_at: string | null
           created_at: string
           data: Json
+          deleted_at: string | null
           id: string
           password_hash: string | null
+          title: string | null
+          view_count: number
         }
         Insert: {
+          auto_delete_at?: string | null
           created_at?: string
           data: Json
+          deleted_at?: string | null
           id: string
           password_hash?: string | null
+          title?: string | null
+          view_count?: number
         }
         Update: {
+          auto_delete_at?: string | null
           created_at?: string
           data?: Json
+          deleted_at?: string | null
           id?: string
           password_hash?: string | null
+          title?: string | null
+          view_count?: number
         }
         Relationships: []
       }
@@ -40,7 +52,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      fetch_share_for_view: {
+        Args: { p_id: string; p_password_hash?: string }
+        Returns: {
+          access_granted: boolean
+          data: Json
+          id: string
+          requires_password: boolean
+          status: string
+          title: string
+          view_count: number
+        }[]
+      }
+      get_share_metadata: {
+        Args: { p_id: string }
+        Returns: {
+          auto_delete_at: string
+          deleted_at: string
+          id: string
+          title: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
