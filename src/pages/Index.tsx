@@ -75,7 +75,14 @@ export default function Index() {
   };
 
   const removeImage = (id: string) => {
-    setImages(prev => prev.filter(img => img.id !== id));
+    setImages(prev => {
+      const updated = prev.filter(img => img.id !== id);
+      // Show full placeholder if removing last image
+      if (updated.length === 0) {
+        setShowUploader(true);
+      }
+      return updated;
+    });
   };
 
   const moveImage = (index: number, direction: 'up' | 'down') => {
@@ -177,53 +184,66 @@ export default function Index() {
           </div>
         )}
 
+        {/* Show uploader above images when there are images and showUploader is true */}
         {images.length > 0 && showUploader && (
           <div className="mb-6">
             <ImageUploader onImageAdd={addImage} />
           </div>
         )}
 
+        {/* Show placeholder if no images and uploader is closed */}
+        {images.length === 0 && !showUploader && (
+          <div className="max-w-xl mx-auto mt-16 text-center">
+            <p className="text-muted-foreground mb-4">No images yet</p>
+            <Button onClick={() => setShowUploader(true)}>
+              <Plus size={16} /> Add Image
+            </Button>
+          </div>
+        )}
+
         {/* Image panels */}
-        <div className={
-          layout === 'horizontal'
-            ? 'flex flex-col gap-6 sm:flex-row sm:overflow-x-auto sm:pb-4'
-            : 'flex flex-col gap-6'
-        }>
-          {images.map((image, index) => (
-            <div
-              key={image.id}
-              className={layout === 'horizontal' ? 'sm:min-w-[600px] sm:flex-shrink-0' : ''}
-            >
-              <div className="mb-2">
-                <span className="text-xs font-mono text-primary font-semibold">
-                  Step {index + 1}
-                </span>
+        {images.length > 0 && (
+          <div className={
+            layout === 'horizontal'
+              ? 'flex flex-col gap-6 sm:flex-row sm:overflow-x-auto sm:pb-4'
+              : 'flex flex-col gap-6'
+          }>
+            {images.map((image, index) => (
+              <div
+                key={image.id}
+                className={layout === 'horizontal' ? 'sm:min-w-[600px] sm:flex-shrink-0' : ''}
+              >
+                <div className="mb-2">
+                  <span className="text-xs font-mono text-primary font-semibold">
+                    Step {index + 1}
+                  </span>
+                </div>
+                <ImagePanel
+                  image={image}
+                  onUpdate={updateImage}
+                  onRemove={() => removeImage(image.id)}
+                  onMoveUp={index > 0 ? () => moveImage(index, 'up') : undefined}
+                  onMoveDown={index < images.length - 1 ? () => moveImage(index, 'down') : undefined}
+                />
+                {/* Add image below button */}
+                <div className="mt-3 flex flex-col items-center gap-3">
+                  {insertAfterIndex === index ? (
+                    <ImageUploader onImageAdd={addImage} />
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-muted-foreground hover:text-foreground"
+                      onClick={() => setInsertAfterIndex(index)}
+                    >
+                      <Plus size={14} /> Add image below
+                    </Button>
+                  )}
+                </div>
               </div>
-              <ImagePanel
-                image={image}
-                onUpdate={updateImage}
-                onRemove={() => removeImage(image.id)}
-                onMoveUp={index > 0 ? () => moveImage(index, 'up') : undefined}
-                onMoveDown={index < images.length - 1 ? () => moveImage(index, 'down') : undefined}
-              />
-              {/* Add image below button */}
-              <div className="mt-3 flex flex-col items-center gap-3">
-                {insertAfterIndex === index ? (
-                  <ImageUploader onImageAdd={addImage} />
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-muted-foreground hover:text-foreground"
-                    onClick={() => setInsertAfterIndex(index)}
-                  >
-                    <Plus size={14} /> Add image below
-                  </Button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </main>
 
       {/* Share dialog */}
