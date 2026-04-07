@@ -19,11 +19,12 @@ const port = Number(process.env.SHARE_SERVER_PORT || process.env.PORT || 4173);
 const siteUrl = (process.env.VITE_PUBLIC_SITE_URL || 'http://localhost:4173').replace(/\/+$/, '');
 const frontendOrigin = process.env.FRONTEND_ORIGIN?.replace(/\/+$/, '') || 'http://localhost:5173';
 const publicOgImageUrl = `${siteUrl}/og-image.png`;
+const isDebugMode = process.env.MODE === 'debug' || process.env.SHARE_SERVER_MODE === 'debug';
 
 const MAX_TITLE_LENGTH = 200;
 const MAX_PASSWORD_LENGTH = 200;
 const MAX_IMAGES_PER_SHARE = 20;
-const MAX_SHARE_PAYLOAD_BYTES = 5 * 1024 * 1024;
+const MAX_SHARE_PAYLOAD_BYTES = 25 * 1024 * 1024;
 const CREATE_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 const CREATE_RATE_LIMIT_MAX = 30;
 
@@ -35,6 +36,18 @@ function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
 }
 
+function debugLog(...args: unknown[]) {
+  if (isDebugMode) {
+    console.log(...args);
+  }
+}
+
+function debugError(...args: unknown[]) {
+  if (isDebugMode) {
+    console.error(...args);
+  }
+}
+
 try {
   d1 = createD1Client();
   shareRepository = createD1ShareRepository(d1);
@@ -44,7 +57,18 @@ try {
 }
 
 const app = express();
-app.use(express.json({ limit: '10mb' }));
+app.use((req, _res, next) => {
+  debugLog(
+    new Date().toISOString(),
+    req.method,
+    req.url,
+    'content-length=',
+    req.headers['content-length'] || 'unknown',
+  );
+  next();
+});
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use((_req, res, next) => {
   res.header('X-Content-Type-Options', 'nosniff');
   res.header('Referrer-Policy', 'strict-origin-when-cross-origin');
@@ -159,6 +183,12 @@ app.get('/health', (_req, res) => {
 
 app.post('/api/shares/create', async (req, res) => {
   try {
+    debugLog('create route hit');
+    debugLog('body keys:', Object.keys(req.body || {}));
+    debugLog('title:', req.body?.title);
+    debugLog('images:', req.body?.data?.images?.length);
+    debugLog('payload chars:', JSON.stringify(req.body || {}).length);
+
     const repository = getShareRepository();
     const { title, password, data, auto_delete_at } = req.body;
 
@@ -186,7 +216,7 @@ app.post('/api/shares/create', async (req, res) => {
     }
 
     const serializedData = JSON.stringify(data);
-    if (serializedData.length > MAX_SHARE_PAYLOAD_BYTES) {
+    if (Buffer.byteLength(serializedData, 'utf8') > MAX_SHARE_PAYLOAD_BYTES) {
       return res.status(413).json({ error: 'Payload too large. Try fewer or smaller images.' });
     }
 
@@ -198,6 +228,7 @@ app.post('/api/shares/create', async (req, res) => {
       passwordHash = await bcrypt.hash(password, salt);
     }
 
+    debugLog('before insert');
     await repository.createShare({
       id: shareId,
       title: title.trim(),
@@ -205,6 +236,7 @@ app.post('/api/shares/create', async (req, res) => {
       passwordHash,
       autoDeleteAt: auto_delete_at || null,
     });
+    debugLog('after insert');
 
     return res.json({ id: shareId });
   } catch (error) {
@@ -298,9 +330,35 @@ app.get('/view/:id', async (req, res) => {
   res.send(html);
 });
 
+app.use((error: unknown, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  debugError('request failed:', req.method, req.url, error);
+
+  if (res.headersSent) {
+    next(error);
+    return;
+  }
+
+  if (getErrorMessage(error).includes('request entity too large')) {
+    res.status(413).json({ error: 'Payload too large. Try fewer or smaller images.' });
+    return;
+  }
+
+  res.status(500).json({ error: 'Internal server error' });
+});
+
 app.get('*', (_req, res) => {
   sendSpaIndex(res);
 });
+
+if (isDebugMode) {
+  process.on('uncaughtException', (err) => {
+    console.error('uncaughtException:', err);
+  });
+
+  process.on('unhandledRejection', (err) => {
+    console.error('unhandledRejection:', err);
+  });
+}
 
 ensureSchema(getD1())
   .then(() => {
