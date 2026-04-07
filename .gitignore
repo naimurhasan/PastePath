@@ -24,3 +24,7 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Local SQLite database files
+/data/*.sqlite*
+/data/*.db*

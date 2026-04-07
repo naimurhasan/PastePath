@@ -1,4 +1,4 @@
-import type { D1Client } from './d1-client.ts';
+import type { DatabaseSync } from 'node:sqlite';
 
 export interface ShareData {
   images: unknown[];
@@ -35,51 +35,60 @@ export interface ShareRepository {
   incrementViewCount(id: string): Promise<void>;
 }
 
-interface D1ShareRow extends Omit<ShareRecord, 'data' | 'view_count'> {
-  data: string | ShareData;
+interface SqliteShareRow extends Omit<ShareRecord, 'data' | 'view_count'> {
+  data: string;
   view_count: number | string | null;
 }
 
-function parseShareRow(row: D1ShareRow | null): ShareRecord | null {
+function parseShareRow(row: SqliteShareRow | null | undefined): ShareRecord | null {
   if (!row) return null;
 
   return {
     ...row,
-    data: typeof row.data === 'string' ? JSON.parse(row.data) as ShareData : row.data,
+    data: JSON.parse(row.data) as ShareData,
     view_count: Number(row.view_count || 0),
   };
 }
 
-export function createD1ShareRepository(client: D1Client): ShareRepository {
+export function createSqliteShareRepository(database: DatabaseSync): ShareRepository {
+  const createShareStatement = database.prepare(`
+    INSERT INTO shares (id, title, data, password_hash, auto_delete_at)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+  const findByIdStatement = database.prepare(`
+    SELECT id, title, data, view_count, password_hash, deleted_at, auto_delete_at
+    FROM shares
+    WHERE id = ?
+    LIMIT 1
+  `);
+  const findMetadataByIdStatement = database.prepare(`
+    SELECT title, deleted_at, auto_delete_at
+    FROM shares
+    WHERE id = ?
+    LIMIT 1
+  `);
+  const incrementViewCountStatement = database.prepare(`
+    UPDATE shares
+    SET view_count = view_count + 1
+    WHERE id = ?
+  `);
+
   return {
     async createShare({ id, title, data, passwordHash, autoDeleteAt }) {
-      await client.query(
-        `INSERT INTO shares (id, title, data, password_hash, auto_delete_at)
-         VALUES (?, ?, ?, ?, ?)`,
-        [id, title, JSON.stringify(data), passwordHash, autoDeleteAt],
-      );
+      createShareStatement.run(id, title, JSON.stringify(data), passwordHash, autoDeleteAt);
     },
 
     async findById(id) {
-      const row = await client.queryFirst<D1ShareRow>(
-        `SELECT id, title, data, view_count, password_hash, deleted_at, auto_delete_at
-         FROM shares
-         WHERE id = ?
-         LIMIT 1`,
-        [id],
-      );
+      const row = findByIdStatement.get(id) as SqliteShareRow | undefined;
       return parseShareRow(row);
     },
 
     async findMetadataById(id) {
-      return client.queryFirst<ShareMetadataRecord>(
-        'SELECT title, deleted_at, auto_delete_at FROM shares WHERE id = ? LIMIT 1',
-        [id],
-      );
+      return (findMetadataByIdStatement.get(id) as ShareMetadataRecord | undefined) ?? null;
     },
 
     async incrementViewCount(id) {
-      await client.query('UPDATE shares SET view_count = view_count + 1 WHERE id = ?', [id]);
+      incrementViewCountStatement.run(id);
     },
   };
 }

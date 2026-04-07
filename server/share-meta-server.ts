@@ -2,12 +2,12 @@ import crypto from 'node:crypto';
 import express, { type Response } from 'express';
 import path from 'node:path';
 import { existsSync } from 'node:fs';
+import { type DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
 import bcrypt from 'bcryptjs';
-import { createD1Client, type D1Client } from './d1-client.ts';
 import { buildOgHtml, isBotRequest } from './og-html.ts';
-import { createD1ShareRepository, type ShareRepository } from './share-repository.ts';
-import { ensureSchema } from './schema-migrations.ts';
+import { createSqliteShareRepository, type ShareRepository } from './share-repository.ts';
+import { createSqliteDatabase, ensureSqliteSchema } from './sqlite-database.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,6 +20,10 @@ const siteUrl = (process.env.VITE_PUBLIC_SITE_URL || 'http://localhost:4173').re
 const frontendOrigin = process.env.FRONTEND_ORIGIN?.replace(/\/+$/, '') || 'http://localhost:5173';
 const publicOgImageUrl = `${siteUrl}/og-image.png`;
 const isDebugMode = process.env.MODE === 'debug' || process.env.SHARE_SERVER_MODE === 'debug';
+const configuredSqliteDatabasePath = process.env.SHARE_SQLITE_PATH || path.join(projectRoot, 'data', 'pastepath.sqlite');
+const sqliteDatabasePath = path.isAbsolute(configuredSqliteDatabasePath)
+  ? configuredSqliteDatabasePath
+  : path.resolve(projectRoot, configuredSqliteDatabasePath);
 
 const MAX_TITLE_LENGTH = 200;
 const MAX_PASSWORD_LENGTH = 200;
@@ -28,9 +32,9 @@ const MAX_SHARE_PAYLOAD_BYTES = 25 * 1024 * 1024;
 const CREATE_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 const CREATE_RATE_LIMIT_MAX = 30;
 
-let d1: D1Client | null = null;
+let sqliteDatabase: DatabaseSync | null = null;
 let shareRepository: ShareRepository | null = null;
-let d1InitError: unknown = null;
+let databaseInitError: unknown = null;
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
@@ -49,10 +53,11 @@ function debugError(...args: unknown[]) {
 }
 
 try {
-  d1 = createD1Client();
-  shareRepository = createD1ShareRepository(d1);
+  sqliteDatabase = createSqliteDatabase(sqliteDatabasePath);
+  ensureSqliteSchema(sqliteDatabase);
+  shareRepository = createSqliteShareRepository(sqliteDatabase);
 } catch (error) {
-  d1InitError = error;
+  databaseInitError = error;
   console.warn(getErrorMessage(error));
 }
 
@@ -94,17 +99,9 @@ app.use((req, res, next) => {
 const shareIdRegex = /^[a-f0-9]{8}$/i;
 const createAttemptsByIp = new Map<string, { count: number; resetAt: number }>();
 
-function getD1() {
-  if (!d1) {
-    throw d1InitError || new Error('Cloudflare D1 is not configured');
-  }
-  return d1;
-}
-
 function getShareRepository(): ShareRepository {
-  getD1();
   if (!shareRepository) {
-    throw new Error('Share repository is not configured');
+    throw databaseInitError || new Error('Share repository is not configured');
   }
   return shareRepository;
 }
@@ -178,7 +175,10 @@ if (existsSync(distDir)) {
 }
 
 app.get('/health', (_req, res) => {
-  res.json({ ok: true, database: d1 ? 'configured' : 'missing_env' });
+  res.status(sqliteDatabase ? 200 : 503).json({
+    ok: Boolean(sqliteDatabase),
+    database: sqliteDatabase ? 'sqlite_configured' : 'sqlite_error',
+  });
 });
 
 app.post('/api/shares/create', async (req, res) => {
@@ -241,8 +241,8 @@ app.post('/api/shares/create', async (req, res) => {
     return res.json({ id: shareId });
   } catch (error) {
     console.error('Create share error:', error);
-    if (getErrorMessage(error).includes('environment variable')) {
-      return res.status(503).json({ error: 'Server not configured' });
+    if (!shareRepository) {
+      return res.status(503).json({ error: 'Database not available' });
     }
     return res.status(500).json({ error: 'Internal server error' });
   }
@@ -295,8 +295,8 @@ app.post('/api/shares/view', async (req, res) => {
     });
   } catch (error) {
     console.error('View share error:', error);
-    if (getErrorMessage(error).includes('environment variable')) {
-      return res.status(503).json({ error: 'Server not configured' });
+    if (!shareRepository) {
+      return res.status(503).json({ error: 'Database not available' });
     }
     return res.status(500).json({ error: 'Internal server error' });
   }
@@ -360,13 +360,19 @@ if (isDebugMode) {
   });
 }
 
-ensureSchema(getD1())
-  .then(() => {
-    app.listen(port, () => {
-      console.log(`Share metadata server listening on http://localhost:${port}`);
-    });
-  })
-  .catch((error) => {
-    console.error('Failed to initialize Cloudflare D1 schema:', error);
-    process.exit(1);
-  });
+app.listen(port, () => {
+  console.log(`Share metadata server listening on http://localhost:${port}`);
+  if (sqliteDatabase) {
+    console.log(`SQLite database ready at ${sqliteDatabasePath}`);
+  }
+});
+
+process.on('SIGINT', () => {
+  sqliteDatabase?.close();
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  sqliteDatabase?.close();
+  process.exit(0);
+});
