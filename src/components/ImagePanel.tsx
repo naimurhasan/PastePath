@@ -14,6 +14,8 @@ interface Props {
   onMoveDown?: () => void;
 }
 
+let activeImagePanelId: string | null = null;
+
 export default function ImagePanel({ image, onUpdate, onRemove, onMoveUp, onMoveDown }: Props) {
   const canvasRef = useRef<AnnotationCanvasHandle>(null);
   const [activeTool, setActiveTool] = useState<ToolType>('square');
@@ -47,6 +49,8 @@ export default function ImagePanel({ image, onUpdate, onRemove, onMoveUp, onMove
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      if (activeImagePanelId !== image.id) return;
+
       // Skip if typing in an input/textarea
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
@@ -77,7 +81,11 @@ export default function ImagePanel({ image, onUpdate, onRemove, onMoveUp, onMove
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [handleRedo, handleUndo]);
+  }, [handleRedo, handleUndo, image.id]);
+
+  const markAsActivePanel = () => {
+    activeImagePanelId = image.id;
+  };
 
   const handleClear = () => {
     setUndoStack(prev => [...prev, image.annotations]);
@@ -104,7 +112,11 @@ export default function ImagePanel({ image, onUpdate, onRemove, onMoveUp, onMove
   };
 
   return (
-    <div className="image-card flex flex-col gap-0">
+    <div
+      className="image-card flex flex-col gap-0"
+      onFocusCapture={markAsActivePanel}
+      onPointerDownCapture={markAsActivePanel}
+    >
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 border-b border-border">
         <div className="flex items-center gap-2 text-muted-foreground min-w-0">
