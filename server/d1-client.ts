@@ -1,6 +1,7 @@
 const D1_API_BASE = 'https://api.cloudflare.com/client/v4';
 const MAX_RETRIES = 4;
 const BASE_RETRY_DELAY_MS = 750;
+const MAX_RETRY_DELAY_MS = 5_000;
 const DEFAULT_D1_REQUEST_TIMEOUT_MS = 15_000;
 
 export interface D1QueryResult<T = Record<string, unknown>> {
@@ -101,7 +102,14 @@ export function createD1Client(): D1Client {
 
       if (shouldRetry) {
         const fallbackDelay = BASE_RETRY_DELAY_MS * 2 ** attempt;
-        await sleep(retryAfterSeconds > 0 ? retryAfterSeconds * 1000 : fallbackDelay);
+        const retryDelay = Math.min(
+          retryAfterSeconds > 0 ? retryAfterSeconds * 1000 : fallbackDelay,
+          MAX_RETRY_DELAY_MS,
+        );
+        if (isDebugMode) {
+          console.log('D1 retry:', path, 'attempt=', attempt + 1, 'delayMs=', retryDelay, 'message=', message);
+        }
+        await sleep(retryDelay);
         continue;
       }
 
