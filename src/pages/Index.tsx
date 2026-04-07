@@ -13,6 +13,25 @@ export default function Index() {
   const [shareOpen, setShareOpen] = useState(false);
   const [insertAfterIndex, setInsertAfterIndex] = useState<number | null>(null);
 
+  const addImage = useCallback((src: string) => {
+    const newImage: AnnotatedImage = {
+      id: crypto.randomUUID(),
+      originalSrc: src,
+      annotations: [],
+      caption: '',
+    };
+    setImages(prev => {
+      if (insertAfterIndex !== null) {
+        const copy = [...prev];
+        copy.splice(insertAfterIndex + 1, 0, newImage);
+        return copy;
+      }
+      return [...prev, newImage];
+    });
+    setShowUploader(false);
+    setInsertAfterIndex(null);
+  }, [insertAfterIndex]);
+
   // Load cloned images from sessionStorage
   useEffect(() => {
     const cloned = sessionStorage.getItem('clone_images');
@@ -49,26 +68,7 @@ export default function Index() {
     };
     document.addEventListener('paste', handler);
     return () => document.removeEventListener('paste', handler);
-  }, []);
-
-  const addImage = useCallback((src: string) => {
-    const newImage: AnnotatedImage = {
-      id: crypto.randomUUID(),
-      originalSrc: src,
-      annotations: [],
-      caption: '',
-    };
-    setImages(prev => {
-      if (insertAfterIndex !== null) {
-        const copy = [...prev];
-        copy.splice(insertAfterIndex + 1, 0, newImage);
-        return copy;
-      }
-      return [...prev, newImage];
-    });
-    setShowUploader(false);
-    setInsertAfterIndex(null);
-  }, [insertAfterIndex]);
+  }, [addImage]);
 
   const updateImage = (updated: AnnotatedImage) => {
     setImages(prev => prev.map(img => img.id === updated.id ? updated : img));

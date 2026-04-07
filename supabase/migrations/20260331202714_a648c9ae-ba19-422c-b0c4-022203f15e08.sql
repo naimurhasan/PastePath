@@ -1,1 +1,0 @@
-DROP POLICY "Anyone can update view_count" ON public.shares;

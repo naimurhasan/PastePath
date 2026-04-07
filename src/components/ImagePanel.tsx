@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { X, GripVertical, Download, ClipboardCopy, ChevronUp, ChevronDown } from 'lucide-react';
 import AnnotationCanvas, { AnnotationCanvasHandle } from './AnnotationCanvas';
 import AnnotationToolbar from './AnnotationToolbar';
@@ -28,21 +28,21 @@ export default function ImagePanel({ image, onUpdate, onRemove, onMoveUp, onMove
     onUpdate({ ...image, annotations: [...image.annotations, annotation] });
   };
 
-  const handleUndo = () => {
+  const handleUndo = useCallback(() => {
     if (undoStack.length === 0) return;
     const prev = undoStack[undoStack.length - 1];
     setRedoStack(r => [...r, image.annotations]);
     setUndoStack(u => u.slice(0, -1));
     onUpdate({ ...image, annotations: prev });
-  };
+  }, [image, onUpdate, undoStack]);
 
-  const handleRedo = () => {
+  const handleRedo = useCallback(() => {
     if (redoStack.length === 0) return;
     const next = redoStack[redoStack.length - 1];
     setUndoStack(u => [...u, image.annotations]);
     setRedoStack(r => r.slice(0, -1));
     onUpdate({ ...image, annotations: next });
-  };
+  }, [image, onUpdate, redoStack]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -77,7 +77,7 @@ export default function ImagePanel({ image, onUpdate, onRemove, onMoveUp, onMove
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [undoStack, redoStack, image.annotations]);
+  }, [handleRedo, handleUndo]);
 
   const handleClear = () => {
     setUndoStack(prev => [...prev, image.annotations]);

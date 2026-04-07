@@ -1,1 +1,0 @@
-ALTER TABLE public.shares DROP COLUMN is_deleted;

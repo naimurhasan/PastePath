@@ -5,7 +5,7 @@
 <h1 align="center">PastePath</h1>
 
 <p align="center">
-  <strong>Screenshot Annotation & Sharing Tool</strong>
+  <strong>Screenshot Annotation, Step-by-Step Guides & Visual Sharing Tool</strong>
 </p>
 
 <p align="center">
@@ -15,13 +15,23 @@
   <a href="https://github.com/naimurhasan/PastePath/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" />
   </a>
+</p>
+
+<p align="center">
   <a href="https://pastepath.com/">
-    <img src="https://img.shields.io/badge/pastepath.com-live-brightgreen.svg" alt="pastepath.com" />
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/badge/Open%20PastePath.com-Live%20App-25c2a0?style=for-the-badge&logo=cloudflare&logoColor=white&labelColor=111827" />
+      <img src="https://img.shields.io/badge/Open%20PastePath.com-Live%20App-25c2a0?style=for-the-badge&logo=cloudflare&logoColor=white&labelColor=111827" alt="Open PastePath.com live app" />
+    </picture>
   </a>
 </p>
 
 <p align="center">
-  Drop screenshots, annotate with shapes, arrows, text & freehand, then share with a single link.
+  Drop screenshots, annotate with shapes, arrows, text & freehand, arrange them into clear steps, then share as a link, copy to clipboard, or export.
+</p>
+
+<p align="center">
+  Great for tutorials, documentation, product reviews, bug reports, QA walkthroughs, onboarding guides, feature handoffs, support replies, and many more visual workflows.
 </p>
 
 ---
@@ -36,7 +46,7 @@
 
 | Feature | Description |
 |---------|-------------|
-| 🖼️ **Multi-image steps** | Add multiple screenshots as ordered steps |
+| 🖼️ **Multi-image steps** | Add multiple screenshots as ordered steps for tutorials, docs, reviews, and walkthroughs |
 | ✏️ **Rich annotation tools** | Rectangle, circle, arrow, pencil, eraser, and text |
 | 🔤 **Unicode text** | Full emoji & multilingual text support (CJK, Devanagari, etc.) |
 | 🎨 **Color & size** | 8 preset colors, 4 stroke sizes, keyboard shortcuts |
@@ -44,7 +54,7 @@
 | ↕️ **Reorder steps** | Move steps up/down to rearrange your guide |
 | 📋 **Captions** | Add multiline captions per step |
 | 🔗 **One-click sharing** | Generate a shareable link with optional password protection |
-| 📥 **Export** | Copy to clipboard or download annotated images |
+| 📥 **Export** | Copy to clipboard, download annotated images, or use share links for longer guides |
 | 🌙 **Dark UI** | Sleek dark theme by default |
 
 ## 🚀 Quick Start
@@ -63,13 +73,77 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173) in your browser.
 
+## Backend With Cloudflare D1
+
+PastePath now uses the frontend -> backend -> database flow for shares. The browser never talks to the database directly. Share links are still clean `/view/:id` URLs like `https://pastepath.com/view/abc12345`.
+
+To serve OG/Twitter metadata on the same clean route, run the tiny Node server after building the app:
+
+```bash
+pnpm install
+pnpm build
+pnpm serve:share
+```
+
+Required environment variables:
+
+- `VITE_PUBLIC_SITE_URL` — your app's domain (for example: `https://pastepath.com`); used by both frontend for clean share links and backend for OG metadata
+- `VITE_API_BASE_URL` — backend URL for local frontend development (for example: `http://localhost:4173`)
+- `CLOUDFLARE_ACCOUNT_ID` — Cloudflare account ID
+- `CLOUDFLARE_D1_DATABASE_ID` — D1 database ID (UUID)
+- `CLOUDFLARE_API_TOKEN` — Cloudflare API token with D1 edit permissions
+- `FRONTEND_ORIGIN` — allowed frontend origin for local development CORS (defaults to `http://localhost:5173`)
+- `SHARE_SERVER_PORT` — port for the metadata server (optional, defaults to `4173`)
+
+Create a local `.env` from `.env.example`:
+
+```bash
+cp .env.example .env
+```
+
+Then fill it like this:
+
+```bash
+VITE_PUBLIC_SITE_URL="https://pastepath.com"
+VITE_API_BASE_URL="http://localhost:4173"
+
+CLOUDFLARE_ACCOUNT_ID="your_cloudflare_account_id"
+CLOUDFLARE_D1_DATABASE_ID="your_cloudflare_d1_database_id"
+CLOUDFLARE_API_TOKEN="your_cloudflare_api_token"
+
+FRONTEND_ORIGIN="http://localhost:5173"
+SHARE_SERVER_PORT="4173"
+```
+
+Where to get the Cloudflare values:
+
+- `CLOUDFLARE_ACCOUNT_ID`: Cloudflare Dashboard -> select your account -> copy the Account ID from the account overview/sidebar.
+- `CLOUDFLARE_D1_DATABASE_ID`: Cloudflare Dashboard -> Workers & Pages -> D1 SQL Database -> open your PastePath database -> copy the Database ID/UUID from the database details or settings page.
+- `CLOUDFLARE_API_TOKEN`: Cloudflare Dashboard -> profile icon -> My Profile -> API Tokens -> Create Token -> Custom token. Give it D1 edit access for your account, scope it only to the PastePath account if possible, then copy the token once and store it only in `.env` or your deployment secret manager.
+
+No AWS credentials are required for the current backend. The app uses Cloudflare D1 through the backend API.
+
+Deployment note:
+
+- Route all requests for `/view/:id` to this server.
+- The server returns OG metadata HTML for crawlers and serves the SPA for normal browser requests.
+
+Database setup:
+
+- No Supabase files, migrations, AWS credentials, or manual SQL steps are required.
+- The backend creates the D1 schema automatically on startup through Cloudflare's D1 HTTP API.
+- The startup code is in `server/share-meta-server.mjs` inside `ensureSchema()`.
+- It runs `CREATE TABLE IF NOT EXISTS shares (...)` and `CREATE INDEX IF NOT EXISTS idx_shares_auto_delete_at ...`, so restarting the server is safe and will not overwrite existing share rows.
+- If you create a brand-new D1 database later, put the new `CLOUDFLARE_D1_DATABASE_ID` in `.env` and restart `npm run serve:share`; the table will be created in that new database on boot.
+
 ## 🛠️ Tech Stack
 
 - **React 18** + **TypeScript**
 - **Vite** — blazing-fast dev & build
 - **Tailwind CSS** — utility-first styling
 - **shadcn/ui** — accessible, composable components
-- **Supabase** — backend for sharing & persistence
+- **Node + Express** — backend API and OG metadata server
+- **Cloudflare D1** — database for share persistence
 - **Canvas API** — high-resolution annotation rendering
 
 ## ⌨️ Keyboard Shortcuts
@@ -103,13 +177,15 @@ src/
 │   └── ViewShare.tsx          # Shared link viewer
 ├── types/
 │   └── annotation.ts          # TypeScript types
-└── integrations/
-    └── supabase/              # Backend client & types
+└── lib/
+    └── api.ts                 # Frontend client for backend API
 ```
 
 ## 🤝 Contributing
 
 Contributions are welcome! Feel free to open issues or submit pull requests.
+
+Good next feature idea: add a highlighter annotation tool for marking text or UI areas with translucent strokes.
 
 1. Fork the repo
 2. Create your feature branch (`git checkout -b feature/awesome`)

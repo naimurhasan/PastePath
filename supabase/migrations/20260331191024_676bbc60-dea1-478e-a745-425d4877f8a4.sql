@@ -1,1 +1,0 @@
-ALTER TABLE public.shares ADD COLUMN title text, ADD COLUMN auto_delete_at timestamptz;

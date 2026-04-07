@@ -1,21 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Lock, ArrowLeft, Copy, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnnotatedImage } from '@/types/annotation';
 import AnnotationCanvas from '@/components/AnnotationCanvas';
-import { supabase } from '@/integrations/supabase/client';
+import { viewShare } from '@/lib/api';
 import { toast } from 'sonner';
-
-interface ShareData {
-  id: string;
-  title: string | null;
-  data: any;
-  view_count: number;
-  status: string;
-  requires_password: boolean;
-  access_granted: boolean;
-}
 
 export default function ViewShare() {
   const { id } = useParams<{ id: string }>();
@@ -28,20 +18,12 @@ export default function ViewShare() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
-  const fetchShare = async (pwd?: string) => {
+  const fetchShare = useCallback(async (pwd?: string) => {
+    if (!id) return;
+
     setLoading(true);
     try {
-      const { data, error: fetchError } = await supabase.functions.invoke('view-share', {
-        body: { id: id!, password: pwd || null },
-      });
-
-      if (fetchError || !data) {
-        setError('Share link not found or expired');
-        setLoading(false);
-        return;
-      }
-
-      const shareData: ShareData = data;
+      const shareData = await viewShare({ id, password: pwd || null });
 
       if (shareData.status === 'not_found' || shareData.status === 'deleted') {
         setError('Share link not found or has been deleted');
@@ -77,11 +59,11 @@ export default function ViewShare() {
       setError('Failed to load share');
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
-    if (id) fetchShare();
-  }, [id]);
+    fetchShare();
+  }, [fetchShare]);
 
   const handleUnlock = async () => {
     const pwd = password;

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Share2, Lock, Copy, Check, Eye, EyeOff, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnnotatedImage } from '@/types/annotation';
-import { supabase } from '@/integrations/supabase/client';
+import { createShare } from '@/lib/api';
 import { toast } from 'sonner';
 
 interface Props {
@@ -58,6 +58,12 @@ export default function ShareDialog({ images, open, onClose }: Props) {
 
   if (!open) return null;
 
+  const getPublicBaseUrl = () => {
+    const configured = import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined;
+    const rawBase = configured && configured.trim().length > 0 ? configured : window.location.origin;
+    return rawBase.replace(/\/+$/, '');
+  };
+
   const generateShareLink = async () => {
     if (!title.trim()) {
       toast.error('Please enter a title for your share');
@@ -79,25 +85,20 @@ export default function ShareDialog({ images, open, onClose }: Props) {
         ? new Date(Date.now() + selectedOption.days * 24 * 60 * 60 * 1000).toISOString()
         : null;
 
-      // Use edge function for server-side validation, ID generation, and bcrypt hashing
-      const { data, error } = await supabase.functions.invoke('create-share', {
-        body: {
-          title: title.trim(),
-          password: password || null,
-          data: { images: compressedImages },
-          auto_delete_at: autoDeleteAt,
-        },
+      const data = await createShare({
+        title: title.trim(),
+        password: password || null,
+        data: { images: compressedImages },
+        auto_delete_at: autoDeleteAt,
       });
 
-      if (error || !data?.id) {
-        console.error('Share creation error:', error);
+      if (!data?.id) {
         toast.error('Failed to create share link. Try fewer or smaller images.');
         setGenerating(false);
         return;
       }
 
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const url = `${supabaseUrl}/functions/v1/og-metadata?id=${data.id}`;
+      const url = `${getPublicBaseUrl()}/view/${data.id}`;
       setShareUrl(url);
       toast.success(`Share will ${selectedOption?.days ? `auto-delete in ${selectedOption.label.toLowerCase()}` : `never auto-delete`}`);
     } catch (err) {
