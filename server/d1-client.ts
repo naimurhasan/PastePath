@@ -1,4 +1,6 @@
 const D1_API_BASE = 'https://api.cloudflare.com/client/v4';
+const MAX_RETRIES = 4;
+const BASE_RETRY_DELAY_MS = 750;
 
 export interface D1QueryResult<T = Record<string, unknown>> {
   results?: T[];
@@ -21,6 +23,10 @@ interface CloudflareD1Response<T = Record<string, unknown>> {
   messages?: string[];
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function getRequiredEnv(name: string) {
   const value = process.env[name];
   if (!value || value.trim().length === 0) {
@@ -36,29 +42,44 @@ export function createD1Client(): D1Client {
   const baseUrl = `${D1_API_BASE}/accounts/${accountId}/d1/database/${databaseId}`;
 
   async function request<T = Record<string, unknown>>(path: string, payload: unknown) {
-    const response = await fetch(`${baseUrl}${path}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      const response = await fetch(`${baseUrl}${path}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
 
-    const json = await response.json().catch(() => null) as CloudflareD1Response<T> | null;
-    if (!json) {
-      throw new Error(`Cloudflare D1 returned a non-JSON response with status ${response.status}`);
-    }
+      const json = await response.json().catch(() => null) as CloudflareD1Response<T> | null;
+      if (!json) {
+        throw new Error(`Cloudflare D1 returned a non-JSON response with status ${response.status}`);
+      }
 
-    if (!response.ok || json.success === false) {
       const message =
         json?.errors?.map((error) => error.message).filter(Boolean).join(', ') ||
         json?.messages?.join(', ') ||
         `Cloudflare D1 request failed with status ${response.status}`;
-      throw new Error(message);
+      const retryAfterSeconds = Number(response.headers.get('retry-after') || 0);
+      const shouldRetry =
+        attempt < MAX_RETRIES &&
+        (response.status === 429 || /throttl|rate|please wait/i.test(message));
+
+      if (shouldRetry) {
+        const fallbackDelay = BASE_RETRY_DELAY_MS * 2 ** attempt;
+        await sleep(retryAfterSeconds > 0 ? retryAfterSeconds * 1000 : fallbackDelay);
+        continue;
+      }
+
+      if (!response.ok || json.success === false) {
+        throw new Error(message);
+      }
+
+      return json.result;
     }
 
-    return json.result;
+    throw new Error('Cloudflare D1 request failed after retries');
   }
 
   async function query<T = Record<string, unknown>>(sql: string, params: unknown[] = []) {
